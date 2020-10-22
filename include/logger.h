@@ -1,56 +1,27 @@
 #pragma once
 #include <iostream>
-#include <chrono>
-#include <sstream>
 #include <optional>
 
 class logger{
-    std::stringstream m_ss;
-
-    decltype(std::chrono::steady_clock::now()) m_time_point =
-        std::chrono::steady_clock::now();
+protected:
+    logger(){}
 public:
-    size_t buf_len = 1024;
-    size_t flush_ms = 10;
 
     template<class T>
     void log(const T& data) { 
-        auto now = std::chrono::steady_clock::now();
-        auto delta = now - m_time_point;
-        auto delta_ms = std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
-
-        auto& ss = m_ss;
-        ss << data;
-        if(ss.str().size() >= buf_len ||
-            delta_ms >= flush_ms)
-        {
-            std::cout << ss.str();
-            ss.str("");
-            m_time_point = now;
-        }
+        std::cout << data;
     }
 
-    friend std::ostream& operator<<(logger& lgr, std::ostream& str) { 
-        auto now = std::chrono::steady_clock::now();
-        auto delta = now - lgr.m_time_point;
-        auto delta_ms = std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
-
-        auto& ss = lgr.m_ss;
-        ss << str.rdbuf();
-        if(ss.str().size() >= lgr.buf_len ||
-            delta_ms >= lgr.flush_ms)
-        {
-            std::cout << ss.str();
-            ss.str("");
-            lgr.m_time_point = now;
-        }
-        return str;
+    template<class T>
+    logger& operator<<(const T& data) { 
+        log(data);
+        return *this;
     }
 
     static auto& get_logger(){
         static std::optional<logger> lgr;
         if(!lgr.has_value()){
-            lgr.emplace();
+            lgr = logger();
         }
         return lgr.value();
     }

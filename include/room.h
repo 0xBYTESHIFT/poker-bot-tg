@@ -10,16 +10,26 @@
 class room:public nameable, public identifyable{
 public:
     using user_cont = std::vector<user_ptr>;
-
+    using token_t = std::string;
+protected:
     logger& lgr;
-
+public:
     room(id_t id);
+
+    property<user_ptr> owner;
+    property<std::set<user_ptr>> banned, muted;
+    property<token_t> token = "";
     property<user_cont> users = {};
 
     void add_user(user_ptr user);
     void del_user(user_ptr user);
+    user_ptr get_user(const id_t &id)const;
+    user_ptr get_user(const user::token_t &token)const;
     void process_mes(user_ptr user, mes_ptr mes);
+    std::string desc()const;
 };
+
+#include "utils.h"
 
 room::room(id_t id)
     :identifyable(id),
@@ -27,8 +37,7 @@ room::room(id_t id)
 {}
 void room::add_user(user_ptr user){
     this->users().emplace_back(user);
-    auto mes = "room:"+name()+", user["+std::to_string(user->id())+","+user->name()+"] connected\n";
-    lgr.log(mes);
+    lgr << "room:"<<desc()<<", user"<<get_desc_log(user)<<" connected\n";
 }
 void room::del_user(user_ptr user){
     auto& users = this->users();
@@ -36,13 +45,32 @@ void room::del_user(user_ptr user){
     if(user_it != users.end()){
         users.erase(user_it);
         user->room() = nullptr;
+        lgr << "room:"<<desc()<<", user"<<get_desc_log(user)<<" disconnected\n";
     }
-    auto mes = "room:"+name()+", user["+std::to_string(user->id())+","+user->name()+"] disconnected\n";
-    lgr.log(mes);
 }
+user_ptr room::get_user(const id_t &id)const{
+    auto user_it = std::find_if(users().begin(), users().end(),
+        [&id](auto u){ return u->id() == id; });
+    if(user_it != users().end()){
+        return *user_it;
+    }
+    return nullptr;
+}
+user_ptr room::get_user(const user::token_t &token)const{
+    auto user_it = std::find_if(users().begin(), users().end(),
+        [&token](auto u){ return u->token() == token; });
+    if(user_it != users().end()){
+        return *user_it;
+    }
+    return nullptr;
+}
+
 void room::process_mes(user_ptr user, mes_ptr mes){
-    auto log_mes = "room:"+name()+", user["+std::to_string(user->id())+","+user->name()+"] wrote:"+mes->text+"\n";
-    lgr.log(log_mes);
+    lgr << "room:"<<desc()<<", user"<<get_desc_log(user)<<" wrote:"
+        <<mes->text<<"\n";
+}
+std::string room::desc()const{
+    return name()+"["+token()+"]";
 }
 
 #include "user.h"

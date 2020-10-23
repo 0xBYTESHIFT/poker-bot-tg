@@ -1,7 +1,8 @@
 #pragma once
 #include <string>
-#include "property.h"
+#include "core/property.h"
 
+namespace bot{
 class nameable{
 public:
     using name_t = std::string;
@@ -12,4 +13,6 @@ public:
 
     virtual ~nameable(){}
     property<name_t> name;
+};
+
 };

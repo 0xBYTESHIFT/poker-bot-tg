@@ -2,6 +2,7 @@
 #include <iostream>
 #include <optional>
 
+namespace bot{
 class logger{
 protected:
     logger(){}
@@ -25,4 +26,6 @@ public:
         }
         return lgr.value();
     }
+};
+
 };

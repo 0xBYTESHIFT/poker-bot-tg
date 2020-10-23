@@ -1,7 +1,8 @@
 #pragma once
 #include <cstddef>
-#include "property.h"
+#include "core/property.h"
 
+namespace bot{
 class identifyable{
 public:
     using id_t = std::size_t;
@@ -11,4 +12,6 @@ public:
 
     virtual ~identifyable(){}
     const property<id_t> id;
+};
+
 };

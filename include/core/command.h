@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 #include <functional>
-#include "datatypes.h"
+#include "core/datatypes.h"
+
+namespace bot{
 
 class command{
 public:
@@ -52,3 +54,5 @@ auto command::callback()const -> command::callback_t{
 void command::invoke(mes_ptr mes){
     m_callback(mes);
 }
+
+};

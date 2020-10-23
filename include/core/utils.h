@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "datatypes.h"
+#include "core/datatypes.h"
+
+namespace bot{
 
 class user;
 class room;
@@ -25,5 +27,7 @@ inline std::string get_desc(const room_ptr &room){
     return result;
 }
 
-#include "room.h"
-#include "user.h"
+};
+
+#include "core/room.h"
+#include "core/user.h"

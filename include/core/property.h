@@ -1,5 +1,6 @@
 #pragma once
 
+namespace bot{
 template<class T>
 class property{
 protected:
@@ -25,4 +26,6 @@ public:
     auto operator =(const T& rhs){ return m_value = rhs; }
     auto operator =(T&& rhs)     { return m_value = std::move(rhs); }
     //template<class Arg> auto& operator =  (Arg&& rhs) { return m_value  = std::forward<Arg>(rhs); }
+};
+
 };

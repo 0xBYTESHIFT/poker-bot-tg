@@ -1,5 +1,5 @@
 #include <iostream>
-#include "poker_bot.h"
+#include "core/bot.h"
 
 
 int main(int argc, char* argv[]) {
@@ -7,10 +7,10 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("provide telegram token!");
     }
     const std::string token(argv[1]);
-    poker_bot bot(token);
+    bot::room_bot b(token);
 
     try {
-        bot.start();
+        b.start();
     } catch (TgBot::TgException& e) {
         printf("error tg api: %s\n", e.what());
     } catch (std::exception& e){

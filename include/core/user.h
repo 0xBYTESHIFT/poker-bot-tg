@@ -1,8 +1,10 @@
 #pragma once
 #include <memory>
 #include <cstddef>
-#include "identifyable.h"
-#include "nameable.h"
+#include "core/identifyable.h"
+#include "core/nameable.h"
+
+namespace bot{
 
 class room;
 
@@ -22,4 +24,7 @@ public:
 std::string user::desc()const{
     return name()+"["+token()+"]";
 }
-#include "room.h"
+
+};
+
+#include "core/room.h"

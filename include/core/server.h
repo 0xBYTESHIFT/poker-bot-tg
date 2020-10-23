@@ -5,12 +5,13 @@
 #include <string>
 #include <set>
 #include <random>
-#include "property.h"
-#include "room.h"
-#include "user.h"
-#include "datatypes.h"
-#include "utils.h"
+#include "core/property.h"
+#include "core/room.h"
+#include "core/user.h"
+#include "core/datatypes.h"
+#include "core/utils.h"
 
+namespace bot{
 class token_generator{
     static inline std::set<std::string> p_tokens;
     const static size_t p_token_len = 8; 
@@ -93,7 +94,7 @@ room_ptr server::create_room(user_ptr user){
     user->room() = room;
     rooms().emplace_back(room);
 
-    lgr << "server: user"<<get_desc_log(user)<<" created room"<<get_desc(room)<<"\n";
+    lgr << "server: user"<<bot::get_desc_log(user)<<" created room"<<bot::get_desc(room)<<"\n";
     return room;
 }
 
@@ -104,12 +105,14 @@ void server::on_user_connect(user_ptr user){
 
 void server::on_room_empty(room_ptr room){
     if(!room->users().empty()){
-        lgr << "E server: called on_empty handler on non-empty room"<<get_desc(room)<<"\n";
+        lgr << "E server: called on_empty handler on non-empty room"<<bot::get_desc(room)<<"\n";
         return;
     }
     auto &rooms = this->rooms();
     auto room_it = std::find(rooms.begin(), rooms.end(), room);
     if(room_it == rooms.end()){ return; }
     rooms.erase(room_it);
-    lgr << "server: room"<<get_desc(room)<<" removed\n";
+    lgr << "server: room"<<bot::get_desc(room)<<" removed\n";
 }
+
+};

@@ -2,13 +2,14 @@
 #include <tgbot/tgbot.h>
 #include <algorithm>
 #include <optional>
-#include "datatypes.h"
-#include "user.h"
-#include "room.h"
-#include "server.h"
-#include "command.h"
+#include "core/datatypes.h"
+#include "core/user.h"
+#include "core/room.h"
+#include "core/server.h"
+#include "core/command.h"
 
-class poker_bot{
+namespace bot{
+class room_bot{
 protected:
     TgBot::Bot m_bot;
     server s;
@@ -31,14 +32,14 @@ protected:
     void p_on_room_kick_request(mes_ptr mes);
 
     std::vector<command> m_commands;
-    std::tuple<user_ptr, std::optional<command>> p_process_cmd(const mes_ptr &mes)const;
+    auto p_process_cmd(const mes_ptr &mes)const -> std::tuple<user_ptr, std::optional<command>>;
 public:
-    poker_bot(const std::string &token);
+    room_bot(const std::string &token);
 
     void start();
 };
 
-void poker_bot::p_on_start(mes_ptr mes){
+void room_bot::p_on_start(mes_ptr mes){
     auto id = mes->chat->id;
     api.sendMessage(id, "Hi!");
     auto srv_user = s.get_user(id);
@@ -54,7 +55,7 @@ void poker_bot::p_on_start(mes_ptr mes){
     s.on_user_connect(user);
 }
 
-void poker_bot::p_on_stop(mes_ptr mes){
+void room_bot::p_on_stop(mes_ptr mes){
     auto id = mes->chat->id;
     auto user = s.get_user(id);
     if(!user){ return; }
@@ -65,7 +66,7 @@ void poker_bot::p_on_stop(mes_ptr mes){
     }
 }
 
-void poker_bot::p_on_any(mes_ptr mes){
+void room_bot::p_on_any(mes_ptr mes){
     auto id = mes->chat->id;
 
     for(auto &cmd:m_commands){
@@ -88,7 +89,7 @@ void poker_bot::p_on_any(mes_ptr mes){
     }
 }
 
-void poker_bot::p_on_room_create_request(mes_ptr mes){
+void room_bot::p_on_room_create_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -104,7 +105,7 @@ void poker_bot::p_on_room_create_request(mes_ptr mes){
     api.sendMessage(id, response);
 }
 
-void poker_bot::p_on_room_close_request(mes_ptr mes){
+void room_bot::p_on_room_close_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -122,7 +123,7 @@ void poker_bot::p_on_room_close_request(mes_ptr mes){
     user->room() = s.lobby();
     api.sendMessage(id, "Welcome to lobby!");
 }
-void poker_bot::p_on_room_join_request(mes_ptr mes){
+void room_bot::p_on_room_join_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -151,7 +152,7 @@ void poker_bot::p_on_room_join_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_list_request(mes_ptr mes){
+void room_bot::p_on_room_list_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -170,7 +171,7 @@ void poker_bot::p_on_room_list_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_kick_request(mes_ptr mes){
+void room_bot::p_on_room_kick_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -205,7 +206,7 @@ void poker_bot::p_on_room_kick_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_subscribe_request(mes_ptr mes){
+void room_bot::p_on_room_subscribe_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -223,7 +224,7 @@ void poker_bot::p_on_room_subscribe_request(mes_ptr mes){
     response = "You've successfuly subscribed to room "+room->desc();
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_unsubscribe_request(mes_ptr mes){
+void room_bot::p_on_room_unsubscribe_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -242,7 +243,7 @@ void poker_bot::p_on_room_unsubscribe_request(mes_ptr mes){
         "To subscribe back, use /sub command";
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_mute_request(mes_ptr mes){
+void room_bot::p_on_room_mute_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -275,7 +276,7 @@ void poker_bot::p_on_room_mute_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_unmute_request(mes_ptr mes){
+void room_bot::p_on_room_unmute_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -308,7 +309,7 @@ void poker_bot::p_on_room_unmute_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_ban_request(mes_ptr mes){
+void room_bot::p_on_room_ban_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -344,7 +345,7 @@ void poker_bot::p_on_room_ban_request(mes_ptr mes){
     }
     api.sendMessage(id, response);
 }
-void poker_bot::p_on_room_unban_request(mes_ptr mes){
+void room_bot::p_on_room_unban_request(mes_ptr mes){
     auto id = mes->chat->id;
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
@@ -378,7 +379,7 @@ void poker_bot::p_on_room_unban_request(mes_ptr mes){
     api.sendMessage(id, response);
 }
 
-poker_bot::poker_bot(const std::string &token)
+room_bot::room_bot(const std::string &token)
     :api(m_bot.getApi()),
     m_bot(token)
 {
@@ -417,7 +418,7 @@ poker_bot::poker_bot(const std::string &token)
     ev.onAnyMessage([this](mes_ptr mes) { p_on_any(mes); });
 }
 
-std::tuple<user_ptr, std::optional<command>> poker_bot::p_process_cmd(const mes_ptr &mes)const{
+auto room_bot::p_process_cmd(const mes_ptr &mes)const -> std::tuple<user_ptr, std::optional<command>>{
     auto id = mes->chat->id;
     auto user = s.get_user(id);
     if(!user){ return std::make_tuple(user, std::nullopt); }
@@ -436,10 +437,12 @@ std::tuple<user_ptr, std::optional<command>> poker_bot::p_process_cmd(const mes_
     return std::make_tuple(user, std::move(cmd));
 }
 
-void poker_bot::start(){
+void room_bot::start(){
     printf("Bot username: %s\n", m_bot.getApi().getMe()->username.c_str());
     TgBot::TgLongPoll longPoll(m_bot);
     while (true) {
         longPoll.start();
     }
+}
+
 }

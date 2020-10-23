@@ -8,42 +8,45 @@ public:
     using name_t = std::string;
     using callback_t = std::function<void(mes_ptr)>;
 
-    const name_t name;
-
     command(const name_t &name,
-        const std::string &cmd_word,
+        const std::string &desc,
         const std::vector<std::string> &args,
         const callback_t &callback);
 
-    std::string usage()const;
-    const std::string& cmd_word()const;
-    const std::vector<std::string>& args()const;
-    callback_t callback()const;
+    auto usage()const -> std::string;
+    auto cmd_word()const -> const std::string&;
+    auto desc()const -> const std::string&;
+    auto args()const -> const std::vector<std::string>&;
+    auto callback()const -> callback_t;
     void invoke(mes_ptr mes);
 protected:
+    const std::string m_desc;
     const std::string m_cmd_word;
     const std::vector<std::string> m_args;
     const callback_t m_callback;
 };
 
-command::command(const name_t &name, const std::string &cmd_word,
+command::command(const name_t &name, const std::string &desc,
     const std::vector<std::string> &args, const callback_t &callback)
-    :name(name), m_cmd_word(cmd_word), m_args(args), m_callback(callback)
+    :m_cmd_word(name), m_desc(desc), m_args(args), m_callback(callback)
 {}
-std::string command::usage()const{
-    std::string usage = "usage: "+m_cmd_word;
+auto command::usage()const -> std::string{
+    std::string usage = "Usage: /"+m_cmd_word;
     for(auto &arg:m_args){
         usage+= " ["+arg+"]";
     }
     return usage;
 }
-const std::string& command::cmd_word()const{
+auto command::cmd_word()const -> const std::string&{
     return m_cmd_word;
 }
-const std::vector<std::string>& command::args()const{
+auto command::desc()const -> const std::string&{
+    return m_desc;
+}
+auto command::args()const -> const std::vector<std::string>&{
     return m_args;
 }
-command::callback_t command::callback()const{
+auto command::callback()const -> command::callback_t{
     return m_callback;
 }
 void command::invoke(mes_ptr mes){

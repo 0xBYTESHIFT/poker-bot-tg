@@ -22,6 +22,8 @@ protected:
     void p_on_room_close_request(mes_ptr mes);
     void p_on_room_join_request(mes_ptr mes);
     void p_on_room_list_request(mes_ptr mes);
+    void p_on_room_subscribe_request(mes_ptr mes);
+    void p_on_room_unsubscribe_request(mes_ptr mes);
     void p_on_room_mute_request(mes_ptr mes);
     void p_on_room_unmute_request(mes_ptr mes);
     void p_on_room_ban_request(mes_ptr mes);
@@ -67,7 +69,7 @@ void poker_bot::p_on_any(mes_ptr mes){
     auto id = mes->chat->id;
 
     for(auto &cmd:m_commands){
-        if (StringTools::startsWith(mes->text, cmd.cmd_word())) { return; } //skip if we got a command
+        if (StringTools::startsWith(mes->text, "/"+cmd.cmd_word())) { return; } //skip if we got a command
     }
     auto user = s.get_user(id);
     if(!user){
@@ -186,6 +188,8 @@ void poker_bot::p_on_room_kick_request(mes_ptr mes){
         auto user_kicked = room->get_user(token);
         if(!user_kicked){
             response = "No user with token "+token+" in this room";
+        }else if(user_kicked == user){
+            response = "You really should love yourself more, don't do this!";
         }else{
             room->del_user(user_kicked); //remove user from kicked room
             s.lobby()->add_user(user_kicked); //place kicked user in lobby
@@ -199,6 +203,43 @@ void poker_bot::p_on_room_kick_request(mes_ptr mes){
             }
         }
     }
+    api.sendMessage(id, response);
+}
+void poker_bot::p_on_room_subscribe_request(mes_ptr mes){
+    auto id = mes->chat->id;
+    auto tpl = p_process_cmd(mes);
+    auto user = std::get<0>(tpl);
+    auto cmd = std::get<1>(tpl);
+    if(!user || !cmd){ return; }
+
+    auto words = StringTools::split(mes->text, ' ');
+    auto &room = user->room();
+    std::string response;
+
+    if(room->unsubscribed().find(user) == room->unsubscribed().end()){
+        return;
+    }
+    room->unsubscribed().erase(user);
+    response = "You've successfuly subscribed to room "+room->desc();
+    api.sendMessage(id, response);
+}
+void poker_bot::p_on_room_unsubscribe_request(mes_ptr mes){
+    auto id = mes->chat->id;
+    auto tpl = p_process_cmd(mes);
+    auto user = std::get<0>(tpl);
+    auto cmd = std::get<1>(tpl);
+    if(!user || !cmd){ return; }
+
+    auto words = StringTools::split(mes->text, ' ');
+    auto &room = user->room();
+    std::string response;
+
+    if(room->unsubscribed().find(user) != room->unsubscribed().end()){
+        return;
+    }
+    room->unsubscribed().emplace(user);
+    response = "You've successfuly unsubscribed from room "+room->desc()+"\n"
+        "To subscribe back, use /sub command";
     api.sendMessage(id, response);
 }
 void poker_bot::p_on_room_mute_request(mes_ptr mes){
@@ -219,6 +260,8 @@ void poker_bot::p_on_room_mute_request(mes_ptr mes){
         auto user_muted = room->get_user(token);
         if(!user_muted){
             response = "No user with token "+token+" in this room";
+        }else if(user_muted == user){
+            response = "You shouldn't mute yourself";
         }else{
             room->muted().emplace(user_muted);
 
@@ -283,6 +326,8 @@ void poker_bot::p_on_room_ban_request(mes_ptr mes){
         auto user_banned = room->get_user(token);
         if(!user_banned){
             response = "No user with token "+token+" in this room";
+        }else if(user_banned == user){
+            response = "Are you sure that you intended to ban yourself? I can't allow this, sorry.";
         }else{
             room->banned().emplace(user_banned);
             room->del_user(user_banned); //remove user from room
@@ -337,31 +382,37 @@ poker_bot::poker_bot(const std::string &token)
     :api(m_bot.getApi()),
     m_bot(token)
 {
-    m_commands.emplace_back("start", "/start", std::vector<std::string>{},
+    using args_t = std::vector<std::string>;
+    const auto no_args = args_t{};
+    m_commands.emplace_back("start",    "run this bot",     no_args,
         [this](auto mes){ p_on_start(mes);});
-    m_commands.emplace_back("stop",  "/stop",  std::vector<std::string>{},
+    m_commands.emplace_back("stop",     "stop this bot",    no_args,
         [this](auto mes){ p_on_stop(mes);});
-    m_commands.emplace_back("create","/create",std::vector<std::string>{},
+    m_commands.emplace_back("create",   "create a room",    no_args,
         [this](auto mes){ p_on_room_create_request(mes); });
-    m_commands.emplace_back("close", "/close", std::vector<std::string>{},
+    m_commands.emplace_back("close",    "close current room",   no_args,
         [this](auto mes){ p_on_room_close_request(mes); });
-    m_commands.emplace_back("join",  "/join",  std::vector<std::string>{"room_token"},
+    m_commands.emplace_back("join",     "join a room",      args_t{"room_token"},
         [this](auto mes){ p_on_room_join_request(mes); });
-    m_commands.emplace_back("list",  "/list",  std::vector<std::string>{},
+    m_commands.emplace_back("list",     "list users in the room",   no_args,
         [this](auto mes){ p_on_room_list_request(mes); });
-    m_commands.emplace_back("kick",  "/kick",  std::vector<std::string>{"user_token"},
+    m_commands.emplace_back("kick",     "kick user",    no_args,
         [this](auto mes){ p_on_room_kick_request(mes); });
-    m_commands.emplace_back("mute",  "/mute",  std::vector<std::string>{"user_token"},
+    m_commands.emplace_back("mute",     "mute user",    no_args,
         [this](auto mes){ p_on_room_mute_request(mes); });
-    m_commands.emplace_back("unmute","/unmute",std::vector<std::string>{"user_token"},
+    m_commands.emplace_back("unmute",   "unmute user",  args_t{"user_token"},
         [this](auto mes){ p_on_room_unmute_request(mes); });
-    m_commands.emplace_back("ban",   "/ban",   std::vector<std::string>{"user_token"},
+    m_commands.emplace_back("ban",      "ban user",     args_t{"user_token"},
         [this](auto mes){ p_on_room_ban_request(mes); });
-    m_commands.emplace_back("unban", "/unban", std::vector<std::string>{"user_token"},
+    m_commands.emplace_back("unban",    "unban user",   args_t{"user_token"},
         [this](auto mes){ p_on_room_unban_request(mes); });
+    m_commands.emplace_back("sub",      "subscribe back to room's messages",    no_args,
+        [this](auto mes){ p_on_room_subscribe_request(mes); });
+    m_commands.emplace_back("unsub",    "unsubscribe from room's messages",     no_args,
+        [this](auto mes){ p_on_room_unsubscribe_request(mes); });
     auto &ev = m_bot.getEvents();
     for(auto &cmd:m_commands){
-        ev.onCommand(cmd.name, cmd.callback());
+        ev.onCommand(cmd.cmd_word(), cmd.callback());
     }
     ev.onAnyMessage([this](mes_ptr mes) { p_on_any(mes); });
 }
@@ -372,7 +423,7 @@ std::tuple<user_ptr, std::optional<command>> poker_bot::p_process_cmd(const mes_
     if(!user){ return std::make_tuple(user, std::nullopt); }
     auto words = StringTools::split(mes->text, ' ');
     auto cmd_it = std::find_if(m_commands.begin(), m_commands.end(),
-        [&](auto cmd){ return cmd.cmd_word() == words.at(0); });
+        [&](auto cmd){ return "/"+cmd.cmd_word() == words.at(0); });
     if(cmd_it == m_commands.end()){
         api.sendMessage(id, "Unknown command");
         return std::make_tuple(user, std::nullopt);

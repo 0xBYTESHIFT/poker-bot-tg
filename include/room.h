@@ -17,7 +17,7 @@ public:
     room(id_t id);
 
     property<user_ptr> owner;
-    property<std::set<user_ptr>> banned, muted;
+    property<std::set<user_ptr>> banned, muted, unsubscribed;
     property<token_t> token = "";
     property<user_cont> users = {};
 

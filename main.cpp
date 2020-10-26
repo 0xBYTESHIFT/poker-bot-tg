@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("provide telegram token!");
     }
     const std::string token(argv[1]);
-    bot::room_bot b(token);
+    poker::poker_bot b(token);
 
     try {
         b.start();

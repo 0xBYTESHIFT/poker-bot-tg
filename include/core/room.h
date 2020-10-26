@@ -29,8 +29,11 @@ public:
     virtual void process_mes(user_ptr user, mes_ptr mes);
     virtual std::string desc()const;
 };
+};
 
 #include "core//utils.h"
+
+namespace bot{
 
 room::room(id_t id)
     :identifyable(id),

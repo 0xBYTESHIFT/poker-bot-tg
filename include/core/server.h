@@ -42,7 +42,9 @@ std::string token_generator::gen(){
 
 class server{
     static inline id_t p_last_room_id = 0;
+protected:
     logger &lgr;
+    id_t p_get_room_id();
 public:
     using room_cont = std::vector<room_ptr>;
     using user_cont = std::map<identifyable::id_t, user_ptr>;
@@ -68,6 +70,10 @@ server::server()
     lobby()->token() = token_generator::gen();
 }
 
+id_t server::p_get_room_id(){
+    return ++p_last_room_id;
+}
+
 user_ptr server::get_user(id_t id)const{
     auto user_it = users().find(id);
     if(user_it != users().end()){
@@ -88,14 +94,14 @@ room_ptr server::get_room(const room::token_t &token)const{
 room_ptr server::create_room(user_ptr user){
     lobby()->del_user(user);
 
-    auto room = std::make_shared<class room>(++p_last_room_id);
+    auto room = std::make_shared<class room>(p_get_room_id());
     room->token() = token_generator::gen();
     room->add_user(user);
     room->owner() = user;
     user->room() = room;
     rooms().emplace_back(room);
 
-    lgr << "server: user"<<bot::get_desc_log(user)<<" created room"<<bot::get_desc(room)<<"\n";
+    lgr << "server: user"<<get_desc_log(user)<<" created room"<<get_desc(room)<<"\n";
     return room;
 }
 

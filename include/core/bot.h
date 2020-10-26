@@ -7,41 +7,146 @@
 #include "core/room.h"
 #include "core/server.h"
 #include "core/command.h"
+#include "core/utils.h"
 
 namespace bot{
+/**
+ * Base bot class to do room-related stuff and basic social commands.
+ * */
 class room_bot{
 protected:
-    TgBot::Bot m_bot;
-    server s;
-    const TgBot::Api& api;
+    TgBot::Bot m_bot; /**< Object to interact with Tg's api */
+    std::unique_ptr<server> s; /**< Server ptr */
+    const TgBot::Api& api; /**< Reference to the api, just for convenient access from within the class */
 
+    /**
+     * Function to react to start command \n
+     * Adds user to server's lobby and server's users storage.
+     * @param mes ptr to message from user
+     * */
     void p_on_start(mes_ptr mes);
+    /**
+     * Function to react to stop command \n
+     * Deletes user from their's room and from server's users storage.
+     * @param mes ptr to message from user
+     * */
     void p_on_stop(mes_ptr mes);
+    /**
+     * Function to react to any message \n
+     * Resend's user message to other users in their's current room if it's not a command.
+     * Commands are ignored here.
+     * @param mes ptr to message from user
+     * */
     void p_on_any(mes_ptr mes);
 
+    /**
+     * Function to react to room create request \n
+     * Creates new room, then server class assigns random token to it and places it in server's rooms storage. \n
+     * User that sent this request is placed into the new room and made into it's owner.  
+     * @param mes ptr to message from user
+     * */
     void p_on_room_create_request(mes_ptr mes);
+    /**
+     * Function to react to room close request \n
+     * Removes user that sent the request from it's current room.
+     * If they are the last person in this room, it will be deleted by server class.
+     * User that sent this request is placed into the server's lobby room.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_close_request(mes_ptr mes);
+    /**
+     * Function to react to room join request \n
+     * Removes user that sent the request from it's current room and places them into requested room if it exists. \n
+     * User has to specify room token that they want to join. User won't be joined if they are banned in the room. \n
+     * It's impossible to close lobby.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_join_request(mes_ptr mes);
+    /**
+     * Function to react to room list request \n
+     * Sends list of users in request sender's current room and their user tokens. Also states if user is muted or not.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_list_request(mes_ptr mes);
+    /**
+     * Function to react to room sunscribe request \n
+     * Subscribes request sender to their current room's messages. User will recieve other users' messages.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_subscribe_request(mes_ptr mes);
+    /**
+     * Function to react to room unsunscribe request \n
+     * Unsubscribes request sender from their current room's messages. User will not recieve other users' messages.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_unsubscribe_request(mes_ptr mes);
+    /**
+     * Function to react to room mute request \n
+     * Mutes user that is specified by it's token in mute command. Command has to be sent by rooms' owner. \n
+     * Muted user will not be able to send messages that are visible to other users. \n
+     * It's impossible to mute yourself
+     * @param mes ptr to message from user
+     * */
     void p_on_room_mute_request(mes_ptr mes);
+    /**
+     * Function to react to room unmute request \n
+     * Unmutes user that is specified by it's token in unmute command. Command has to be sent by rooms' owner. \n
+     * Unmuted user will be able to send messages that are visible to other users. \n
+     * @param mes ptr to message from user
+     * */
     void p_on_room_unmute_request(mes_ptr mes);
+    /**
+     * Function to react to room ban request \n
+     * Bans user that is specified by it's token in ban command. Command has to be sent by rooms' owner. \n
+     * Banned user will be removed from the room and won't be able to join it again. \n
+     * It's impossible to ban yourself
+     * @param mes ptr to message from user
+     * */
     void p_on_room_ban_request(mes_ptr mes);
+    /**
+     * Function to react to room unban request \n
+     * Unbans user that is specified by it's token in ban command. Command has to be sent by rooms' owner. \n
+     * Unbanned user will be able to join the room again.
+     * @param mes ptr to message from user
+     * */
     void p_on_room_unban_request(mes_ptr mes);
+    /**
+     * Function to react to room kick request \n
+     * Kicks user that is specified by it's token in kick command. Command has to be sent by rooms' owner. \n
+     * Kicked user will be able to join the room again. \n
+     * It's impossible to kick yourself
+     * @param mes ptr to message from user
+     * */
     void p_on_room_kick_request(mes_ptr mes);
 
-    std::vector<command> m_commands;
+    std::vector<command> m_commands; /**< Commands storage. Useful to distinct command from regular message and to process it correctly */
+    /**
+     * Processes commands \n
+     * Checks if sender is registered in the server. Checks if command is valid and has all required arguments. Otherwise sends it's correct usage to the sender. \n
+     * Returns user ptr and command obj if command in the message is valid and user is known to the server. 
+     * @param mes ptr to message from user
+     * @returns user ptr and command obj;
+     * */
     auto p_process_cmd(const mes_ptr &mes)const -> std::tuple<user_ptr, std::optional<command>>;
 public:
+    /**
+     * Room bot's constructor \n
+     * Inits TG API and default room-related commands.
+     * @param token TG API token
+     * */
     room_bot(const std::string &token);
 
+    /**
+     * Starts bot \n
+     * Warning: takes current thread, don't expect this function to finish.
+     * */
     void start();
 };
 
 void room_bot::p_on_start(mes_ptr mes){
     auto id = mes->chat->id;
     api.sendMessage(id, "Hi!");
+    auto &s = *this->s.get();
     auto srv_user = s.get_user(id);
     if(srv_user){ return; } //prevent double joining
     auto user = std::make_shared<class user>(id);
@@ -57,6 +162,7 @@ void room_bot::p_on_start(mes_ptr mes){
 
 void room_bot::p_on_stop(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto user = s.get_user(id);
     if(!user){ return; }
     user->room()->del_user(user);
@@ -68,6 +174,7 @@ void room_bot::p_on_stop(mes_ptr mes){
 
 void room_bot::p_on_any(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
 
     for(auto &cmd:m_commands){
         if (StringTools::startsWith(mes->text, "/"+cmd.cmd_word())) { return; } //skip if we got a command
@@ -91,6 +198,7 @@ void room_bot::p_on_any(mes_ptr mes){
 
 void room_bot::p_on_room_create_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -107,6 +215,7 @@ void room_bot::p_on_room_create_request(mes_ptr mes){
 
 void room_bot::p_on_room_close_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -125,6 +234,7 @@ void room_bot::p_on_room_close_request(mes_ptr mes){
 }
 void room_bot::p_on_room_join_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -154,6 +264,7 @@ void room_bot::p_on_room_join_request(mes_ptr mes){
 }
 void room_bot::p_on_room_list_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -173,6 +284,7 @@ void room_bot::p_on_room_list_request(mes_ptr mes){
 }
 void room_bot::p_on_room_kick_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -208,6 +320,7 @@ void room_bot::p_on_room_kick_request(mes_ptr mes){
 }
 void room_bot::p_on_room_subscribe_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -226,6 +339,7 @@ void room_bot::p_on_room_subscribe_request(mes_ptr mes){
 }
 void room_bot::p_on_room_unsubscribe_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -245,6 +359,7 @@ void room_bot::p_on_room_unsubscribe_request(mes_ptr mes){
 }
 void room_bot::p_on_room_mute_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -278,6 +393,7 @@ void room_bot::p_on_room_mute_request(mes_ptr mes){
 }
 void room_bot::p_on_room_unmute_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -311,6 +427,7 @@ void room_bot::p_on_room_unmute_request(mes_ptr mes){
 }
 void room_bot::p_on_room_ban_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -347,6 +464,7 @@ void room_bot::p_on_room_ban_request(mes_ptr mes){
 }
 void room_bot::p_on_room_unban_request(mes_ptr mes){
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto tpl = p_process_cmd(mes);
     auto user = std::get<0>(tpl);
     auto cmd = std::get<1>(tpl);
@@ -383,6 +501,7 @@ room_bot::room_bot(const std::string &token)
     :api(m_bot.getApi()),
     m_bot(token)
 {
+    this->s = std::make_unique<server>();
     using args_t = std::vector<std::string>;
     const auto no_args = args_t{};
     m_commands.emplace_back("start",    "run this bot",     no_args,
@@ -420,6 +539,7 @@ room_bot::room_bot(const std::string &token)
 
 auto room_bot::p_process_cmd(const mes_ptr &mes)const -> std::tuple<user_ptr, std::optional<command>>{
     auto id = mes->chat->id;
+    auto &s = *this->s.get();
     auto user = s.get_user(id);
     if(!user){ return std::make_tuple(user, std::nullopt); }
     auto words = StringTools::split(mes->text, ' ');

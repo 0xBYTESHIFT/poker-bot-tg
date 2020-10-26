@@ -18,7 +18,7 @@ public:
     property<room_ptr> room = nullptr;
     property<token_t> token = "";
 
-    std::string desc()const;
+    virtual std::string desc()const;
 };
 
 std::string user::desc()const{

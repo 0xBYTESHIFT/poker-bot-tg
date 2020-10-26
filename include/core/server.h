@@ -52,11 +52,12 @@ public:
     property<user_cont> users = {};
 
     server();
-    user_ptr get_user(id_t id)const;
-    room_ptr get_room(const room::token_t &token)const;
-    room_ptr create_room(user_ptr user);
-    void on_user_connect(user_ptr user);
-    void on_room_empty(room_ptr room);
+    virtual user_ptr get_user(id_t id)const;
+    virtual room_ptr get_room(const room::token_t &token)const;
+    virtual room_ptr create_room(user_ptr user);
+    virtual void on_user_connect(user_ptr user);
+    virtual void on_user_disconnect(user_ptr user);
+    virtual void on_room_empty(room_ptr room);
 };
 
 server::server()
@@ -101,6 +102,10 @@ room_ptr server::create_room(user_ptr user){
 void server::on_user_connect(user_ptr user){
     users().emplace(user->id, user);
     user->token = token_generator::gen();
+}
+
+void server::on_user_disconnect(user_ptr user){
+    users().erase(user->id);
 }
 
 void server::on_room_empty(room_ptr room){

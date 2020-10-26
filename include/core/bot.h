@@ -430,7 +430,7 @@ auto room_bot::p_process_cmd(const mes_ptr &mes)const -> std::tuple<user_ptr, st
         return std::make_tuple(user, std::nullopt);
     }
     auto cmd = *cmd_it;
-    if(words.size() != cmd.args().size()){
+    if(words.size()-1 != cmd.args().size()){
         api.sendMessage(id, cmd.usage());
         return std::make_tuple(user, std::nullopt);
     }

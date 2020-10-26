@@ -10,6 +10,9 @@ public:
 
     property(){}
 
+    template<class ...Args>
+    property(Args ... args) :m_value(args ...) {}
+
     template<class Arg>
     property(Arg &&rhs):m_value(std::forward<Arg>(rhs)) {}
 

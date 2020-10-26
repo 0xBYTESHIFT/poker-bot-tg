@@ -22,12 +22,12 @@ public:
     property<token_t> token = "";
     property<user_cont> users = {};
 
-    void add_user(user_ptr user);
-    void del_user(user_ptr user);
-    user_ptr get_user(const id_t &id)const;
-    user_ptr get_user(const user::token_t &token)const;
-    void process_mes(user_ptr user, mes_ptr mes);
-    std::string desc()const;
+    virtual void add_user(user_ptr user);
+    virtual void del_user(user_ptr user);
+    virtual user_ptr get_user(const id_t &id)const;
+    virtual user_ptr get_user(const user::token_t &token)const;
+    virtual void process_mes(user_ptr user, mes_ptr mes);
+    virtual std::string desc()const;
 };
 
 #include "core//utils.h"

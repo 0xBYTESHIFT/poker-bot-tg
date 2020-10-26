@@ -1,6 +1,10 @@
 #include <iostream>
 #include "core/bot.h"
-
+#include "poker/bot.h"
+#include "poker/card.h"
+#include "poker/deck.h"
+#include "poker/bank.h"
+#include "poker/game.h"
 
 int main(int argc, char* argv[]) {
     if(argc != 2){

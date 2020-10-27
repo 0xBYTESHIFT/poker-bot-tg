@@ -1,0 +1,7 @@
+EXTRACT_PRIVATE        = YES 
+
+OUTPUT_DIRECTORY = @CMAKE_CURRENT_BINARY_DIR@/doc_doxygen/
+INPUT            = @CMAKE_CURRENT_SOURCE_DIR@/include/core \
+    @CMAKE_CURRENT_SOURCE_DIR@/include/games \
+    @CMAKE_CURRENT_SOURCE_DIR@/include/poker \
+    @CMAKE_CURRENT_SOURCE_DIR@/docs

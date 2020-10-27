@@ -8,25 +8,61 @@
 #include "core/logger.h"
 
 namespace bot{
+/**
+ * Room class to hold users and their information
+ * */
 class room:public nameable, public identifyable{
 public:
-    using user_cont = std::vector<user_ptr>;
-    using token_t = std::string;
+    using user_cont = std::vector<user_ptr>; /**< User container define */
+    using token_t = std::string; /**< Room's token type define */
 protected:
-    logger& lgr;
+    logger& lgr; /**< logger reference, since it's a singleton */
 public:
+    /**
+     * Room's constructor.
+     * @param id id to find a room in server's class and for convenient logging.
+     * */
     room(id_t id);
 
-    property<user_ptr> owner;
-    property<std::set<user_ptr>> banned, muted, unsubscribed;
-    property<token_t> token = "";
-    property<user_cont> users = {};
+    property<user_ptr> owner; /**< Room's owner pointer. Only owner is allowed to kick/ban/mute users. */
+    property<std::set<user_ptr>> banned, /**< Set with banned users to prevent them from joining. */
+        muted, /**< Set with muted users to prevent them from writing. */
+        unsubscribed; /**< Set with unsubscribed users to prevent them from getting unwanted messages. */
+    property<token_t> token = ""; /**< Room's token, used for joining it. */
+    property<user_cont> users = {}; /**< Users' container. */
 
+    /**
+     * Procedure for adding user into the room.
+     * @param user ptr to user to join
+     * */
     virtual void add_user(user_ptr user);
+    /**
+     * Procedure for deleting user from the room.
+     * @param user ptr to user to delete
+     * */
     virtual void del_user(user_ptr user);
+    /**
+     * Procedure for get user from the room by it's id.
+     * @param id id of the wanted user.
+     * @returns user_ptr if it's found.
+     * */
     virtual user_ptr get_user(const id_t &id)const;
+    /**
+     * Procedure for get user from the room by it's token.
+     * @param token token of the wanted user.
+     * @returns user_ptr if it's found.
+     * */
     virtual user_ptr get_user(const user::token_t &token)const;
+    /**
+     * Procedure for processing user message, basically just logs it for now.
+     * @param user ptr to the sender
+     * @param mes ptr to the message
+     * */
     virtual void process_mes(user_ptr user, mes_ptr mes);
+    /**
+     * Room's description, consists of name and token.
+     * @returns room's description, string
+     * */
     virtual std::string desc()const;
 };
 };

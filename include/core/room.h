@@ -73,7 +73,7 @@ namespace bot{
 
 room::room(id_t id)
     :identifyable(id),
-    lgr(logger::get_logger())
+    lgr(logger::get_instance())
 {}
 void room::add_user(user_ptr user){
     this->users().emplace_back(user);

@@ -105,7 +105,7 @@ public:
 };
 
 server::server()
-    :lgr(logger::get_logger())
+    :lgr(logger::get_instance())
 {
     lobby = std::make_shared<room>(0);
     lobby()->name = std::string("lobby");

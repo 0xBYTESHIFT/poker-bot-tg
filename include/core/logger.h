@@ -1,15 +1,21 @@
 #pragma once
 #include <iostream>
 #include <optional>
+#include "patterns/singleton.h"
 
 namespace bot{
 /**
  * Useful class for logging stuff and defining logs out with cmake.
  * */
-class logger{
-protected:
-    logger(){}
+class logger:public patterns::singleton<logger>{
+    using base = patterns::singleton<logger>; /**< define for convenient usage */
 public:
+    /**
+     * Default constructor. May be called only from singleton base class
+     * due to sinleton_token being protected in it.
+     * @param token token to prevent user constructing of logger.
+     * */
+    logger(base::singleton_token token){}
 
     /**
      * Log any templated parameter to cout
@@ -29,19 +35,6 @@ public:
     logger& operator<<(const T& data) { 
         log(data);
         return *this;
-    }
-
-    /**
-     * Static function to get logger instance to save it as a reference.
-     * Logger behaves like a singleton.
-     * @returns refetence to logger instance.
-     * */
-    static auto& get_logger(){
-        static std::optional<logger> lgr;
-        if(!lgr.has_value()){
-            lgr = logger();
-        }
-        return lgr.value();
     }
 };
 

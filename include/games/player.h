@@ -6,11 +6,21 @@
 
 namespace games{
 
+/**
+ * Game player's class.
+ * */
 class player{
 public:
-    bot::property<bot::user_ptr> user;
+    bot::property<bot::user_ptr> user; /**< Property storing bot's user pointer. */
 
+    /**
+     * Constructor.
+     * @param bot's user pointer.
+     * */
     player(bot::user_ptr user);
+    /**
+     * Virtual destructor for polymorphism purposes.
+     * */
     virtual ~player();
 };
 

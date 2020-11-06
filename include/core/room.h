@@ -6,6 +6,7 @@
 #include "core/property.h"
 #include "core/datatypes.h"
 #include "core/logger.h"
+#include "core/lazy_utils.h"
 
 namespace bot{
 /**
@@ -42,6 +43,11 @@ public:
      * */
     virtual void del_user(user_ptr user);
     /**
+     * Procedure for determinig whether given user is in the room or not.
+     * @param user ptr to user to check;
+     * */
+    virtual bool contains_user(const user_ptr user)const;
+    /**
      * Procedure for get user from the room by it's id.
      * @param id id of the wanted user.
      * @returns user_ptr if it's found.
@@ -77,28 +83,28 @@ room::room(id_t id)
 {}
 void room::add_user(user_ptr user){
     this->users().emplace_back(user);
-    lgr << "room:"<<desc()<<", user"<<bot::get_desc_log(user)<<" connected\n";
+    lgr << "room:"<<desc()<<", user"<<bot::utils::get_desc_log(user)<<" connected\n";
 }
 void room::del_user(user_ptr user){
-    auto& users = this->users();
-    auto user_it = std::find(users.begin(), users.end(), user);
-    if(user_it != users.end()){
-        users.erase(user_it);
+    if(utils::erase(users(), user)){
         user->room() = nullptr;
-        lgr << "room:"<<desc()<<", user"<<bot::get_desc_log(user)<<" disconnected\n";
+        lgr << "room:"<<desc()<<", user"<<bot::utils::get_desc_log(user)<<" disconnected\n";
+    }else{
+        throw std::runtime_error("no such user in the room to delete");
     }
 }
+bool room::contains_user(const user_ptr user)const{
+    return bot::utils::contains(users.get(), user);
+}
 user_ptr room::get_user(const id_t &id)const{
-    auto user_it = std::find_if(users().begin(), users().end(),
-        [&id](auto u){ return u->id() == id; });
+    auto user_it = utils::find_if(users(), [&id](const user_ptr &u){ return u->id() == id; });
     if(user_it != users().end()){
         return *user_it;
     }
     return nullptr;
 }
 user_ptr room::get_user(const user::token_t &token)const{
-    auto user_it = std::find_if(users().begin(), users().end(),
-        [&token](auto u){ return u->token() == token; });
+    auto user_it = utils::find_if(users(), [&token](const user_ptr& u){ return u->token() == token; });
     if(user_it != users().end()){
         return *user_it;
     }
@@ -106,7 +112,7 @@ user_ptr room::get_user(const user::token_t &token)const{
 }
 
 void room::process_mes(user_ptr user, mes_ptr mes){
-    lgr << "room:"<<desc()<<", user"<<bot::get_desc_log(user)<<" wrote:"
+    lgr << "room:"<<desc()<<", user"<<bot::utils::get_desc_log(user)<<" wrote:"
         <<mes->text<<"\n";
 }
 std::string room::desc()const{

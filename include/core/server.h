@@ -143,7 +143,7 @@ room_ptr server::create_room(user_ptr user){
     user->room() = room;
     rooms().emplace_back(room);
 
-    lgr << "server: user"<<get_desc_log(user)<<" created room"<<get_desc(room)<<"\n";
+    lgr << "server: user"<<utils::get_desc_log(user)<<" created room"<<utils::get_desc(room)<<"\n";
     return room;
 }
 
@@ -158,14 +158,14 @@ void server::on_user_disconnect(user_ptr user){
 
 void server::on_room_empty(room_ptr room){
     if(!room->users().empty()){
-        lgr << "E server: called on_empty handler on non-empty room"<<bot::get_desc(room)<<"\n";
+        lgr << "E server: called on_empty handler on non-empty room"<<bot::utils::get_desc(room)<<"\n";
         return;
     }
-    auto &rooms = this->rooms();
-    auto room_it = std::find(rooms.begin(), rooms.end(), room);
-    if(room_it == rooms.end()){ return; }
-    rooms.erase(room_it);
-    lgr << "server: room"<<bot::get_desc(room)<<" removed\n";
+    if(utils::erase(rooms(), room)){
+        lgr << "server: room"<<bot::utils::get_desc(room)<<" removed\n";
+    }else{
+        throw std::runtime_error("no such room in the server to delete");
+    }
 }
 
 };

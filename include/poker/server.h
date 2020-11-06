@@ -27,7 +27,8 @@ room_ptr poker_server::create_room(user_ptr user){
     user->room() = room;
     rooms().emplace_back(room);
 
-    lgr << "server: user"<<get_desc_log(user)<<" created poker room"<<get_desc(room)<<"\n";
+    lgr << "server: user"<<bot::utils::get_desc_log(user)
+        <<" created poker room"<<bot::utils::get_desc(room)<<"\n";
     return room;
 }
 

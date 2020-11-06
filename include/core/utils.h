@@ -8,15 +8,13 @@ namespace bot{
 class user;
 class room;
 
+namespace utils{
+
 inline std::string get_desc_log(const user_ptr &user){
     std::string result = "[";
     result += std::to_string(user->id())+",";
     result += user->name()+"]";
     return result;
-}
-
-inline std::string get_desc(const user_ptr &user){
-    return user->name()+"["+user->token()+"]";
 }
 
 inline std::string get_desc(const room_ptr &room){
@@ -25,6 +23,12 @@ inline std::string get_desc(const room_ptr &room){
     result += room->token()+",";
     result += room->name()+"]";
     return result;
+}
+
+inline std::string get_desc(const user_ptr &user){
+    return user->name()+"["+user->token()+"]";
+}
+
 }
 
 };

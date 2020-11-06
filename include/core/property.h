@@ -1,12 +1,12 @@
 #pragma once
 
-namespace bot{
+namespace bot {
 /**
  * Class for C++ property that helps not to write 
  * tons of code for every class variable
  */
 template<class T>
-class property{
+class property {
 protected:
     T m_value; /**< Value of a property */
 public:
@@ -15,15 +15,15 @@ public:
     /**
      * Default constructor, does nothing special
      */
-    property(){}
+    property() {}
 
     /**
      * Args forward constructor \n
      * Allows multiple arguments to be passed into property's value.
      * @param args arguments to be passed to value's constructor
      */
-    template<class ...Args>
-    property(Args ... args) :m_value(args ...) {}
+    template<class... Args>
+    property(Args... args): m_value(args...) {}
 
     /**
      * Copy/move constructor \n
@@ -32,28 +32,28 @@ public:
      * @param rhs property on the rhs that will be copied or moved into property's value
      */
     template<class Arg>
-    property(Arg &&rhs):m_value(std::forward<Arg>(rhs)) {}
+    property(Arg&& rhs): m_value(std::forward<Arg>(rhs)) {}
 
     /**
      * Call operator, returns reference to value \n
      * @return value's reference
      */
-    auto& operator ()()     { return m_value; }
+    auto& operator()() { return m_value; }
     /**
      * Const call operator, returns const reference to value \n
      * @return value's const reference
      */
-    auto& operator ()()const{ return m_value; }
+    auto& operator()() const { return m_value; }
     /**
      * Pointer operator, returns value's call operator result reference \n
      * @return reference to value's call operator
      */
-    auto& operator ->()     { return m_value(); }
+    auto& operator-> () { return m_value(); }
     /**
      * Const pointer operator, returns value's call operator result reference \n
      * @return const reference to value's call operator
      */
-    auto& operator ->()const{ return m_value(); }
+    auto& operator-> () const { return m_value(); }
     /**
      * Setter, copies rhs into the value \n
      * @param rhs value to copy
@@ -65,36 +65,46 @@ public:
      * @param rhs value to move
      * @return reference to new value
      */
-    auto& set(T&& rhs)      { return m_value = std::move(rhs); }
+    auto& set(T&& rhs) { return m_value = std::move(rhs); }
     /**
      * Getter, returns value's reference \n
      * @return value's reference
      */
-    auto& get()             { return m_value; }
+    auto& get() { return m_value; }
     /**
      * Const getter, returns const value's reference \n
      * @return const value's reference
      */
-    auto& get()const        { return m_value; }
+    auto& get() const { return m_value; }
 
     /**
      * Conversion operator \n
      * @return value
      */
-    operator T()const            { return m_value; }
+    operator T() const { return m_value; }
     /**
      * Assignment copy operator \n
      * @param rhs rhs to copy into the property's value
      * @return reverence to new value
      */
-    auto& operator =(const T& rhs){ return m_value = rhs; }
+    auto& operator=(const T& rhs) { return m_value = rhs; }
     /**
      * Assignment move operator \n
      * @param rhs rhs to move into the property's value
      * @return reverence to new value
      */
-    auto& operator =(T&& rhs)     { return m_value = std::move(rhs); }
+    auto& operator=(T&& rhs) { return m_value = std::move(rhs); }
     //template<class Arg> auto& operator =  (Arg&& rhs) { return m_value  = std::forward<Arg>(rhs); }
+
+    /**
+     * Comparison operator.
+     * @param rhs right parameter to compare. 
+     * @param lhs left parameter to compare. 
+     * @returns true if parameters are equal, false of not.
+     * */
+    friend bool operator==(const property<T>& lhs, const property<T>& rhs) {
+        return lhs() == rhs();
+    }
 };
 
-};
+}; // namespace bot

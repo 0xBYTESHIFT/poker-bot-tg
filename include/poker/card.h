@@ -1,11 +1,12 @@
 #pragma once
-#include <utility>
 #include "core/property.h"
 #include "poker/kinds.h"
 
-namespace poker{
+#include <utility>
 
-class card{
+namespace poker {
+
+class card {
 protected:
 public:
     const unsigned value;
@@ -16,14 +17,8 @@ public:
     card(unsigned value, const class kind& k);
 };
 
-card::card(const card& k)
-    :value(k.value), kind(k.kind)
-{}
-card::card(card&& k)
-    :value(k.value), kind(k.kind)
-{}
-card::card(unsigned value, const class kind& k)
-    :value(value), kind(k)
-{}
+card::card(const card& k): value(k.value), kind(k.kind) {}
+card::card(card&& k): value(k.value), kind(k.kind) {}
+card::card(unsigned value, const class kind& k): value(value), kind(k) {}
 
-};
+}; // namespace poker

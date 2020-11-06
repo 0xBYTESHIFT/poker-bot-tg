@@ -1,14 +1,14 @@
 #pragma once
-#include <optional>
 #include <memory>
+#include <optional>
 
-namespace patterns{
+namespace patterns {
 
 /**
  * Singleton's pattern class.
  * */
 template<class T>
-class singleton{
+class singleton {
 public:
     /**
      * Deleted copy constructor.
@@ -25,13 +25,14 @@ public:
      * Funtion to get instance. Constructs it if it's not constructed yet.
      * @returns refetence to T's instance.
      * */
-    static auto& get_instance(){
+    static auto& get_instance() {
         static std::unique_ptr<T> instance;
-        if(!instance){
-            instance = std::make_unique<T>(singleton_token{});
+        if(!instance) {
+            instance = std::make_unique<T>(singleton_token {});
         }
         return *instance;
     }
+
 protected:
     /**
      * Token to prevent derived classes to be constructed not like a singleton.
@@ -40,7 +41,7 @@ protected:
     /**
      * Default constructor for derived classes to use.
      * */
-    singleton()=default;
+    singleton() = default;
 };
 
-};
+}; // namespace patterns

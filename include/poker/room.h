@@ -17,8 +17,9 @@ void game_poker_room::start_game() {
     auto& user_ptrs_vec                  = this->users();
     poker::bank::init_vals_t bank_config = {{1, 50},  {5, 50},  {10, 50},
                                             {25, 50}, {50, 25}, {100, 25}};
-    this->game() =
-        std::make_unique<poker::game_poker>(user_ptrs_vec, bank_config);
+    auto poker   = new game_poker(user_ptrs_vec, bank_config);
+    this->game() = std::unique_ptr<poker::game_poker>(poker);
+    poker->init_game();
 }
 
 } // namespace poker

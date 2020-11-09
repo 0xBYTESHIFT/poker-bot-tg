@@ -45,6 +45,14 @@ void poker_bot::p_on_room_poker_start(bot::mes_ptr mes) {
 
     auto room = std::dynamic_pointer_cast<poker::game_poker_room>(user->room());
     room->start_game();
+    for(auto& pl: room->game()->players()) {
+        auto& mes_q = pl->mes_to_send;
+        while(!mes_q.empty()) {
+            auto& mes = mes_q.front();
+            api.sendMessage(pl->user()->id(), mes);
+            mes_q.pop();
+        }
+    }
 }
 
 }; // namespace poker

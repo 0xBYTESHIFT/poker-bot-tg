@@ -45,6 +45,13 @@ public:
      * */
     virtual auto add_player(const bot::user_ptr user) -> bool = 0;
     /**
+     * Function that is called by room's class when player leaves room. \n
+     * Game should process this event correctly, then player will be deleted 
+     * from the game automatically, no need to call del_player, although it's not prohibited.
+     * @param pl player's pointer
+     * */
+    virtual void handle_exit(const player_ptr pl) = 0;
+    /**
      * Function to remove someone from the game.
      * If user is not in the game, throws runtime exception.
      * Derived classes should consider to do so too.

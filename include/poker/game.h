@@ -18,9 +18,11 @@ public:
                const bank::init_vals_t& bank_vals);
 
     auto add_player(const bot::user_ptr user) -> bool override;
+    void handle_exit(const game::player_ptr pl) override;
     void init_game();
 
 private:
+    std::size_t p_place; /**< index of a current player*/
     void p_fill_hand(game::player_ptr pl);
 };
 
@@ -29,6 +31,7 @@ game_poker::game_poker(const std::vector<bot::user_ptr>& users,
     games::game(),
     bank(bank_vals) {
     this->state() = state::ended;
+    p_place       = 0;
     for(auto& u: users) {
         add_player(u);
     }
@@ -42,6 +45,24 @@ auto game_poker::add_player(const bot::user_ptr user) -> bool {
     }
     players().emplace_back(new player_poker(user));
     return true;
+}
+
+void game_poker::handle_exit(const game::player_ptr pl) {
+    auto cast = std::dynamic_pointer_cast<const poker::player_poker>(pl);
+    if(!cast) {
+        throw std::runtime_error("wrong player class in the poker game");
+    }
+    auto it = bot::utils::find(players(), pl);
+    if(it == players().end()) {
+        throw std::runtime_error(
+            "player in the poker game's exit handler is not present");
+    }
+    auto place = std::distance(players().cbegin(), it);
+    if(place < p_place) {
+        p_place--; // -1 because the player will be deleted later
+    }
+    players().erase(it);
+    //TODO: handle cast->coins;
 }
 
 void game_poker::init_game() {

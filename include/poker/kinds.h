@@ -12,7 +12,7 @@ struct kind {
 
     virtual ~kind() {};
 
-    kind(const kind &rhs)=delete;
+    kind(const kind& rhs) = delete;
     kind(const size_t& id, const std::string& name, const cards_color& color);
 };
 

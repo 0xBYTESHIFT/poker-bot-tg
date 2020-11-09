@@ -12,7 +12,7 @@ public:
     const unsigned value;
     const class kind& kind;
 
-    card(const card& k)=delete;
+    card(const card& k) = delete;
     card(card&& k);
     card(unsigned value, const class kind& k);
 };

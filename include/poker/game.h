@@ -11,8 +11,10 @@ namespace poker {
 
 class game_poker: public games::game {
 public:
+    using card_ptr = deck::card_ptr;
     bot::property<class bank> bank;
     bot::property<class deck> deck;
+    bot::property<std::vector<card_ptr>> table;
 
     game_poker(const std::vector<bot::user_ptr>& users,
                const bank::init_vals_t& bank_vals);
@@ -24,6 +26,10 @@ public:
 private:
     std::size_t p_place; /**< index of a current player*/
     void p_fill_hand(game::player_ptr pl);
+    auto p_render_game_state() const -> std::string;
+    auto p_render_card(const card_ptr& c) const -> std::string;
+    auto p_render_coins(const bank::coins_t& c) const -> std::string;
+    void p_send_state(const std::string& game_state, player_ptr pl);
 };
 
 game_poker::game_poker(const std::vector<bot::user_ptr>& users,
@@ -68,20 +74,49 @@ void game_poker::handle_exit(const game::player_ptr pl) {
 void game_poker::init_game() {
     deck().refill();
     deck().shuffle();
+    const auto state = p_render_game_state();
     for(auto& pl: players()) {
         p_fill_hand(pl);
+        p_send_state(state, pl);
     }
 }
 void game_poker::p_fill_hand(game::player_ptr pl) {
     auto p     = std::dynamic_pointer_cast<player_poker>(pl);
     auto card1 = deck().get_card();
     auto card2 = deck().get_card();
-    std::string mes =
-        std::to_string(card1->value) + " " + card1->kind.name + " ";
-    mes += std::to_string(card2->value) + " " + card2->kind.name + " ";
+
     p->add_card(std::move(card1));
     p->add_card(std::move(card2));
-    p->mes_to_send.emplace(std::move(mes));
+}
+auto game_poker::p_render_game_state() const -> std::string {
+    std::string mes;
+    mes = "Bank: " + p_render_coins(bank().coins());
+    mes += "\nTable: ";
+    for(auto& card: table()) {
+        mes += p_render_card(card) + " ";
+    }
+    return mes;
+}
+auto game_poker::p_render_card(const card_ptr& c) const -> std::string {
+    std::string mes = std::to_string(c->value) + " " + c->kind.name;
+    return mes;
+}
+auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {
+    std::string mes;
+    for(auto& tower: c) {
+        mes += std::to_string(tower.first) + ":" +
+               std::to_string(tower.second.size()) + " ";
+    }
+    return mes;
+}
+void game_poker::p_send_state(const std::string& game_state, player_ptr pl) {
+    auto mes = p_render_game_state();
+    mes += "\nYour bank:";
+    auto cast = std::dynamic_pointer_cast<player_poker>(pl);
+    mes += p_render_coins(cast->bank().coins());
+    mes += "\nHand:" + p_render_card(cast->cards().at(0)) + " " +
+           p_render_card(cast->cards().at(1));
+    pl->mes_to_send.emplace(mes);
 }
 
 }; // namespace poker

@@ -3,6 +3,7 @@
 #include "core/property.h"
 #include "core/user.h"
 #include "games/player.h"
+#include "poker/bank.h"
 #include "poker/card.h"
 #include "poker/coin.h"
 
@@ -15,7 +16,6 @@ public:
     using card_ptr = std::unique_ptr<class card>;
     using cards_t  = std::vector<card_ptr>;
     using coin_ptr = std::unique_ptr<class coin>;
-    using coins_t  = std::vector<coin_ptr>;
 
     player_poker(bot::user_ptr user);
 
@@ -23,12 +23,13 @@ public:
     void add_card(card_ptr&& c);
 
     bot::property<cards_t> cards;
-    bot::property<coins_t> coins;
+    bot::property<class bank> bank;
 
 protected:
 };
 
-player_poker::player_poker(bot::user_ptr user): games::player(user) {}
+player_poker::player_poker(bot::user_ptr user): games::player(user),
+    bank(0) {}
 
 void player_poker::clear_cards() {
     this->cards().clear();

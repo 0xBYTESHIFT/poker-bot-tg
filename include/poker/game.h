@@ -17,7 +17,7 @@ public:
     bot::property<std::vector<card_ptr>> table;
 
     game_poker(const std::vector<bot::user_ptr>& users,
-               const bank::init_vals_t& bank_vals);
+               const std::size_t& bank_size);
 
     auto add_player(const bot::user_ptr user) -> bool override;
     void handle_exit(const game::player_ptr pl) override;
@@ -33,9 +33,9 @@ private:
 };
 
 game_poker::game_poker(const std::vector<bot::user_ptr>& users,
-                       const bank::init_vals_t& bank_vals):
+                       const std::size_t& bank_size):
     games::game(),
-    bank(bank_vals) {
+    bank(bank_size) {
     this->state() = state::ended;
     p_place       = 0;
     for(auto& u: users) {
@@ -102,11 +102,7 @@ auto game_poker::p_render_card(const card_ptr& c) const -> std::string {
     return mes;
 }
 auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {
-    std::string mes;
-    for(auto& tower: c) {
-        mes += std::to_string(tower.first) + ":" +
-               std::to_string(tower.second.size()) + " ";
-    }
+    std::string mes = std::to_string(c.size());
     return mes;
 }
 void game_poker::p_send_state(const std::string& game_state, player_ptr pl) {

@@ -1,5 +1,6 @@
 #pragma once
 #include "core/lazy_utils.h"
+#include "core/logger.h"
 #include "core/property.h"
 #include "games/player.h"
 
@@ -19,7 +20,8 @@ public:
 
     bot::property<players_cont> players; /**< Property storing players. */
     enum class state { playing, ended };
-    bot::property<enum state> state;
+    bot::property<enum state> state; /**< Game state. */
+    bot::logger& lgr;                /**< Reference to a logger(singleton). */
 
     /**
      * Default constructor.
@@ -60,7 +62,7 @@ public:
     virtual void del_player(const player_ptr& pl);
 };
 
-game::game() {}
+game::game(): lgr(bot::logger::get_instance()) {}
 
 game::~game() {};
 

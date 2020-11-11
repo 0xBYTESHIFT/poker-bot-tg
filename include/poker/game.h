@@ -55,9 +55,12 @@ game_poker::game_poker(const std::vector<bot::user_ptr>& users,
 auto game_poker::add_player(const bot::user_ptr user) -> bool {
     auto pl = p_user_to_player(user);
     if(state() == state::playing || pl) {
+        lgr << "user " << bot::utils::get_desc_log(user)
+            << " can't join poker game\n";
         return false;
     }
     players().emplace_back(new player_poker(user));
+    lgr << "user " << bot::utils::get_desc_log(user) << " joined poker game\n";
     return true;
 }
 
@@ -75,6 +78,8 @@ void game_poker::handle_exit(const game::player_ptr pl) {
         p_place--; // -1 because the player will be deleted later
     }
     players().erase(players().begin() + i);
+    lgr << "poker: " << bot::utils::get_desc_log(pl->user())
+        << " joined poker game\n";
     //TODO: handle cast->coins;
 }
 
@@ -110,7 +115,9 @@ void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
         pl->send(mes);
         return;
     }
-    p_last_bet      = size;
+    lgr << "poker: " << bot::utils::get_desc_log(user) << " made a bet:" << size
+        << "\n";
+    p_last_bet = size;
     std::move(coins.begin(), coins.begin() + size,
               std::back_inserter(game_bank));
     p_advance_place();

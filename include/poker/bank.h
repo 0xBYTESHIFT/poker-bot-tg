@@ -10,23 +10,17 @@ namespace poker {
 class bank {
 public:
     using coin_ptr    = std::unique_ptr<coin>;
-    using coins_t     = std::map<size_t, std::vector<coin_ptr>>;
-    using init_vals_t = std::vector<std::pair<unsigned, unsigned>>;
+    using coins_t     = std::vector<coin_ptr>;
 
-    bank(const init_vals_t& values);
+    bank(const size_t &size=0);
     bot::property<coins_t> coins;
 };
 
-bank::bank(const init_vals_t& values) {
-    for(auto& pair: values) {
-        auto value = pair.first;
-        auto size  = pair.second;
-        std::vector<coin_ptr> vec;
-        vec.reserve(size);
-        for(auto i = 0; i < size; i++) {
-            vec.emplace_back(new coin(value));
-        }
-        coins().emplace(value, std::move(vec));
+bank::bank(const size_t& size) {
+    auto &vec = coins.get();
+    vec.reserve(size);
+    for(auto i = 0; i < size; i++) {
+        vec.emplace_back(new coin(1));
     }
 }
 

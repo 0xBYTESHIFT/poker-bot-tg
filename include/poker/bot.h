@@ -52,13 +52,8 @@ void poker_bot::p_process_mes_queues(games::game_room &room){
 }
 
 void poker_bot::p_on_room_poker_start(bot::mes_ptr mes) {
+    ROOM_BOT_PREPARE(mes);
     using namespace bot::utils;
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
 
     auto room = dyn_cast<poker::game_poker_room>(user->room());
     room->start_game();
@@ -66,13 +61,8 @@ void poker_bot::p_on_room_poker_start(bot::mes_ptr mes) {
 }
 
 void poker_bot::p_on_room_poker_bet(bot::mes_ptr mes) {
+    ROOM_BOT_PREPARE(mes);
     using namespace bot::utils;
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
 
     auto room = dyn_cast<poker::game_poker_room>(user->room());
     if(!room->game()){

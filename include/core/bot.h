@@ -10,6 +10,15 @@
 #include <optional>
 #include <tgbot/tgbot.h>
 
+#define ROOM_BOT_PREPARE(mes)                                                  \
+    auto id   = mes->chat->id;                                                 \
+    auto& s   = *this->s.get();                                                \
+    auto tpl  = p_process_cmd(mes);                                            \
+    auto user = std::get<0>(tpl);                                              \
+    auto cmd  = std::get<1>(tpl);                                              \
+    if(!user || !cmd) {                                                        \
+        return;                                                                \
+    }
 namespace bot {
 /**
  * Base bot class to do room-related stuff and basic social commands.
@@ -212,14 +221,7 @@ void room_bot::p_on_any(mes_ptr mes) {
 }
 
 void room_bot::p_on_room_create_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto room = s.create_room(user); //places user in that room too
 
@@ -232,14 +234,7 @@ void room_bot::p_on_room_create_request(mes_ptr mes) {
 }
 
 void room_bot::p_on_room_close_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto room = user->room();
     if(!room || room == s.lobby()) {
@@ -255,14 +250,7 @@ void room_bot::p_on_room_close_request(mes_ptr mes) {
     api.sendMessage(id, "Welcome to lobby!");
 }
 void room_bot::p_on_room_join_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     std::string response;
@@ -289,14 +277,7 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_list_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto& room           = user->room();
     std::string response = "token name [muted]\n";
@@ -311,14 +292,7 @@ void room_bot::p_on_room_list_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_kick_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -352,14 +326,7 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_subscribe_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -373,14 +340,7 @@ void room_bot::p_on_room_subscribe_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_unsubscribe_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -396,14 +356,7 @@ void room_bot::p_on_room_unsubscribe_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_mute_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -435,14 +388,7 @@ void room_bot::p_on_room_mute_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_unmute_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -476,14 +422,7 @@ void room_bot::p_on_room_unmute_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_ban_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();
@@ -519,14 +458,7 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
     api.sendMessage(id, response);
 }
 void room_bot::p_on_room_unban_request(mes_ptr mes) {
-    auto id   = mes->chat->id;
-    auto& s   = *this->s.get();
-    auto tpl  = p_process_cmd(mes);
-    auto user = std::get<0>(tpl);
-    auto cmd  = std::get<1>(tpl);
-    if(!user || !cmd) {
-        return;
-    }
+    ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->room();

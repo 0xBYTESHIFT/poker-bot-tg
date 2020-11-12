@@ -12,16 +12,16 @@ template<class T>
 using predicate_binary = std::function<bool(const T&, const T&)>;
 
 template<class T, class Arg>
-auto stat_cast(Arg ptr){ return std::static_pointer_cast<T>(ptr); }
+auto stat_cast(std::shared_ptr<Arg> ptr){ return std::static_pointer_cast<T>(ptr); }
 
 template<class T, class Arg>
-auto dyn_cast(Arg ptr){ return std::dynamic_pointer_cast<T>(ptr); }
+auto stat_cast(std::unique_ptr<Arg> &ptr){ return static_cast<T*>(ptr.get()); }
+
+template<class T, class Arg>
+auto dyn_cast(std::shared_ptr<Arg> ptr){ return std::dynamic_pointer_cast<T>(ptr); }
 
 template<class T, class Arg>
 auto dyn_cast(std::unique_ptr<Arg> &ptr){ return dynamic_cast<T*>(ptr.get()); }
-
-template<class T, class Arg>
-auto dyn_cast(const std::unique_ptr<Arg> &ptr){ return dynamic_cast<T*>(ptr.get()); }
 
 template<class T, class Val = typename T::value_type>
 auto find(const T& cont, const Val& val) {

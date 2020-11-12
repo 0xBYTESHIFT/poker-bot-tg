@@ -18,7 +18,7 @@ public:
     bot::property<std::vector<card_ptr>> table;
 
     game_poker(const std::vector<bot::user_ptr>& users,
-               const std::size_t& bank_size);
+               const std::size_t& bank_size, const std::size_t& blind_bet);
 
     auto add_player(const bot::user_ptr user) -> bool override;
     void handle_exit(const game::player_ptr pl) override;
@@ -28,11 +28,15 @@ public:
     void handle_fold(bot::user_ptr user);
 
 private:
-    std::size_t p_place;    /**< index of a current player */
-    std::size_t p_last_bet; /**< last bet to keep track */
+    std::size_t p_place;           /**< index of a current player */
+    std::size_t p_last_bet;        /**< last bet to keep track */
+    std::size_t p_big_blind_place; /**< index of a big blind */
+    std::size_t p_big_blind_bet;   /**< amount of required big blind */
 
     auto p_user_to_player(const bot::user_ptr u) -> game_poker::player_ptr;
     void p_advance_place();
+    auto p_get_blind_big() -> game_poker::player_ptr;
+    auto p_get_blind_small() -> game_poker::player_ptr;
     void p_fill_hand(game::player_ptr pl);
     auto p_render_game_state() const -> std::string;
     auto p_render_card(const card_ptr& c) const -> std::string;
@@ -41,12 +45,15 @@ private:
 };
 
 game_poker::game_poker(const std::vector<bot::user_ptr>& users,
-                       const std::size_t& bank_size):
+                       const std::size_t& bank_size,
+                       const std::size_t& blind_bet):
     games::game(),
     bank(bank_size) {
-    this->state() = state::ended;
-    p_place       = 0;
-    p_last_bet    = 0;
+    this->state()     = state::ended;
+    p_place           = 0;
+    p_last_bet        = 0;
+    p_big_blind_place = 0;
+    p_big_blind_bet   = blind_bet;
     for(auto& u: users) {
         add_player(u);
     }
@@ -142,8 +149,20 @@ void game_poker::p_advance_place() {
     p_place %= players().size();
     players().at(p_place)->send("It's your turn.");
 }
+auto game_poker::p_get_blind_big() -> game_poker::player_ptr {
+    using namespace bot::utils;
+    auto pl_ptr = players().at(p_big_blind_place);
+    return dyn_cast<player_poker>(pl_ptr);
+}
+auto game_poker::p_get_blind_small() -> game_poker::player_ptr {
+    using namespace bot::utils;
+    auto small_blind_place = (p_big_blind_place + 1) % players().size();
+    auto pl_ptr            = players().at(small_blind_place);
+    return dyn_cast<player_poker>(pl_ptr);
+}
 void game_poker::p_fill_hand(game::player_ptr pl) {
-    auto p     = std::dynamic_pointer_cast<player_poker>(pl);
+    using namespace bot::utils;
+    auto p     = dyn_cast<player_poker>(pl);
     auto card1 = deck().get_card();
     auto card2 = deck().get_card();
 

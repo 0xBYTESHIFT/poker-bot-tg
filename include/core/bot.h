@@ -172,7 +172,7 @@ void room_bot::p_on_start(mes_ptr mes) {
     }
 
     s.lobby()->add_user(user);
-    user->room() = s.lobby();
+    user->current_room() = s.lobby();
     s.on_user_connect(user);
 }
 
@@ -183,7 +183,7 @@ void room_bot::p_on_stop(mes_ptr mes) {
     if(!user) {
         return;
     }
-    user->room()->del_user(user);
+    user->current_room()->del_user(user);
     {
         auto& serv_users = s.users();
         serv_users.erase(id);
@@ -204,14 +204,14 @@ void room_bot::p_on_any(mes_ptr mes) {
         return;
     }
 
-    auto& room = user->room();
+    auto& room = user->current_room();
     room->process_mes(user, mes);
     if(room->muted().find(user) != room->muted().end()) {
         return;
     }
 
     std::string relay_mes = user->name() + ":" + mes->text;
-    auto& users           = user->room()->users();
+    auto& users           = user->current_room()->users();
     for(const auto& u: users) {
         if(u == user) {
             continue;
@@ -236,7 +236,7 @@ void room_bot::p_on_room_create_request(mes_ptr mes) {
 void room_bot::p_on_room_close_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
-    auto room = user->room();
+    auto room = user->current_room();
     if(!room || room == s.lobby()) {
         return;
     } //don't delete null room or lobby
@@ -246,7 +246,7 @@ void room_bot::p_on_room_close_request(mes_ptr mes) {
     }
 
     s.lobby()->add_user(user);
-    user->room() = s.lobby();
+    user->current_room() = s.lobby();
     api.sendMessage(id, "Welcome to lobby!");
 }
 void room_bot::p_on_room_join_request(mes_ptr mes) {
@@ -262,9 +262,9 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
         response = "You are banned from joining room " + room->desc();
     } else {
         response = "Welcome to room " + room->desc();
-        user->room()->del_user(user); //delete from previous room
+        user->current_room()->del_user(user); //delete from previous room
         room->add_user(user);         //place in joined room
-        user->room() = room;          //save joined room in user too
+        user->current_room() = room;          //save joined room in user too
 
         std::string broadcast_mes = "User " + user->desc() + " joined";
         for(auto& u: room->users()) {
@@ -279,7 +279,7 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
 void room_bot::p_on_room_list_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
-    auto& room           = user->room();
+    auto& room           = user->current_room();
     std::string response = "token name [muted]\n";
     for(auto& u: room->users()) {
         response += u->token() + " ";
@@ -295,7 +295,7 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
@@ -310,7 +310,7 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
         } else {
             room->del_user(user_kicked);      //remove user from kicked room
             s.lobby()->add_user(user_kicked); //place kicked user in lobby
-            user_kicked->room() = s.lobby();  //save lobby as user's new room
+            user_kicked->current_room() = s.lobby();  //save lobby as user's new room
 
             api.sendMessage(user_kicked->id,
                             "You were kicked from room " + room->desc());
@@ -329,7 +329,7 @@ void room_bot::p_on_room_subscribe_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->unsubscribed().find(user) == room->unsubscribed().end()) {
@@ -343,7 +343,7 @@ void room_bot::p_on_room_unsubscribe_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->unsubscribed().find(user) != room->unsubscribed().end()) {
@@ -359,7 +359,7 @@ void room_bot::p_on_room_mute_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
@@ -391,7 +391,7 @@ void room_bot::p_on_room_unmute_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
@@ -425,7 +425,7 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
@@ -442,7 +442,7 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
             room->banned().emplace(user_banned);
             room->del_user(user_banned);      //remove user from room
             s.lobby()->add_user(user_banned); //place user in lobby
-            user_banned->room() = s.lobby();  //save lobby as user's new room
+            user_banned->current_room() = s.lobby();  //save lobby as user's new room
 
             api.sendMessage(user_banned->id,
                             "You were banned in room " + room->desc());
@@ -461,7 +461,7 @@ void room_bot::p_on_room_unban_request(mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
 
     auto words = StringTools::split(mes->text, ' ');
-    auto& room = user->room();
+    auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {

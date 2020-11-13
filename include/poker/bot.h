@@ -55,7 +55,7 @@ void poker_bot::p_on_room_poker_start(bot::mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
     using namespace bot::utils;
 
-    auto room = dyn_cast<poker::game_poker_room>(user->room());
+    auto room = dyn_cast<poker::game_poker_room>(user->current_room());
     room->start_game();
     p_process_mes_queues(*room);
 }
@@ -64,7 +64,7 @@ void poker_bot::p_on_room_poker_bet(bot::mes_ptr mes) {
     ROOM_BOT_PREPARE(mes);
     using namespace bot::utils;
 
-    auto room = dyn_cast<poker::game_poker_room>(user->room());
+    auto room = dyn_cast<poker::game_poker_room>(user->current_room());
     if(!room->game()){
         return;
     }

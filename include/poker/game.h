@@ -14,7 +14,7 @@ public:
     using player_ptr = std::shared_ptr<player_poker>;
     using card_ptr   = deck::card_ptr;
     bot::property<class bank> bank;
-    bot::property<class deck> deck;
+    bot::property<class deck> cards;
     bot::property<std::vector<card_ptr>> table;
 
     game_poker(const std::vector<bot::user_ptr>& users,
@@ -91,8 +91,8 @@ void game_poker::handle_exit(const game::player_ptr pl) {
 }
 
 void game_poker::init_game() {
-    deck().refill();
-    deck().shuffle();
+    cards().refill();
+    cards().shuffle();
     const auto state = p_render_game_state();
     for(auto& pl: players()) {
         p_fill_hand(pl);
@@ -163,8 +163,8 @@ auto game_poker::p_get_blind_small() -> game_poker::player_ptr {
 void game_poker::p_fill_hand(game::player_ptr pl) {
     using namespace bot::utils;
     auto p     = dyn_cast<player_poker>(pl);
-    auto card1 = deck().get_card();
-    auto card2 = deck().get_card();
+    auto card1 = cards().get_card();
+    auto card2 = cards().get_card();
 
     p->add_card(std::move(card1));
     p->add_card(std::move(card2));

@@ -23,7 +23,7 @@ public:
      * */
     user(id_t id);
 
-    property<room_ptr> room = nullptr; /**< Room where user currently is */
+    property<room_ptr> current_room = nullptr; /**< Room where user currently is */
     property<token_t> token =
         ""; /**< User's token to refer to them in commands */
 

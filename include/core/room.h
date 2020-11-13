@@ -90,7 +90,7 @@ void room::add_user(user_ptr user) {
 }
 void room::del_user(user_ptr user) {
     if(utils::erase(users(), user)) {
-        user->room() = nullptr;
+        user->current_room() = nullptr;
         lgr << "room:" << desc() << ", user" << bot::utils::get_desc_log(user)
             << " disconnected\n";
     } else {

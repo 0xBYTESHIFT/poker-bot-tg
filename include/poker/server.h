@@ -23,7 +23,7 @@ room_ptr poker_server::create_room(user_ptr user) {
     room->token() = token_generator::gen();
     room->add_user(user);
     room->owner() = user;
-    user->room()  = room;
+    user->current_room()  = room;
     rooms().emplace_back(room);
 
     lgr << "server: user" << bot::utils::get_desc_log(user)

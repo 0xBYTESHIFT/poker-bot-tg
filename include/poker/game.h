@@ -28,15 +28,15 @@ public:
     void handle_fold(bot::user_ptr user);
 
 private:
-    std::size_t p_place;           /**< index of a current player */
-    std::size_t p_last_bet;        /**< last bet to keep track */
-    std::size_t p_big_blind_place; /**< index of a big blind */
-    std::size_t p_big_blind_bet;   /**< amount of required big blind */
+    std::size_t p_last_bet;      /**< last bet to keep track */
+    player_ptr p_cur_player;     /**< current player pointer */
+    player_ptr p_big_blind_pl;   /**< big blinded player */
+    player_ptr p_small_blind_pl; /**< small blinded player */
+    std::size_t p_big_blind_bet; /**< amount of required big blind */
 
+    auto p_player_to_it(game_poker::player_ptr p);
     auto p_user_to_player(const bot::user_ptr u) -> game_poker::player_ptr;
     void p_advance_place();
-    auto p_get_blind_big() -> game_poker::player_ptr;
-    auto p_get_blind_small() -> game_poker::player_ptr;
     void p_fill_hand(game::player_ptr pl);
     auto p_render_game_state() const -> std::string;
     auto p_render_card(const card_ptr& c) const -> std::string;
@@ -49,11 +49,9 @@ game_poker::game_poker(const std::vector<bot::user_ptr>& users,
                        const std::size_t& blind_bet):
     games::game(),
     bank(bank_size) {
-    this->state()     = state::ended;
-    p_place           = 0;
-    p_last_bet        = 0;
-    p_big_blind_place = 0;
-    p_big_blind_bet   = blind_bet;
+    this->state()   = state::ended;
+    p_last_bet      = 0;
+    p_big_blind_bet = blind_bet;
     for(auto& u: users) {
         add_player(u);
     }
@@ -81,9 +79,6 @@ void game_poker::handle_exit(const game::player_ptr pl) {
         throw std::runtime_error(
             "player in the poker game's exit handler is not present");
     }
-    if(i < p_place) {
-        p_place--; // -1 because the player will be deleted later
-    }
     players().erase(players().begin() + i);
     lgr << "poker: " << bot::utils::get_desc_log(pl->user())
         << " joined poker game\n";
@@ -104,7 +99,7 @@ void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
     if(!pl) {
         return;
     }
-    if(bot::utils::index(players(), pl) != p_place) {
+    if(pl != p_cur_player) {
         pl->send("It's not your turn to make a bet");
         return;
     }
@@ -134,6 +129,12 @@ void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
     }
 }
 
+auto game_poker::p_player_to_it(game_poker::player_ptr p) {
+    using namespace bot::utils;
+    auto lbd = [&p](auto plr) { return dyn_cast<player_poker>(plr) == p; };
+    auto it  = std::find_if(players().begin(), players().end(), lbd);
+    return it;
+}
 auto game_poker::p_user_to_player(const bot::user_ptr u)
     -> game_poker::player_ptr {
     using namespace bot::utils;
@@ -145,20 +146,14 @@ auto game_poker::p_user_to_player(const bot::user_ptr u)
     return dyn_cast<player_poker>(*pl);
 }
 void game_poker::p_advance_place() {
-    p_place++;
-    p_place %= players().size();
-    players().at(p_place)->send("It's your turn.");
-}
-auto game_poker::p_get_blind_big() -> game_poker::player_ptr {
     using namespace bot::utils;
-    auto pl_ptr = players().at(p_big_blind_place);
-    return dyn_cast<player_poker>(pl_ptr);
-}
-auto game_poker::p_get_blind_small() -> game_poker::player_ptr {
-    using namespace bot::utils;
-    auto small_blind_place = (p_big_blind_place + 1) % players().size();
-    auto pl_ptr            = players().at(small_blind_place);
-    return dyn_cast<player_poker>(pl_ptr);
+    auto it = p_player_to_it(p_cur_player);
+    if(*it == *players().rbegin()) {
+        it = players().begin();
+    }
+    it++;
+    p_cur_player = dyn_cast<player_poker>(*it);
+    p_cur_player->send("It's your turn.");
 }
 void game_poker::p_fill_hand(game::player_ptr pl) {
     using namespace bot::utils;

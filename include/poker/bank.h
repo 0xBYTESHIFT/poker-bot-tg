@@ -7,15 +7,33 @@
 
 namespace poker {
 
+/** Bank class for a poker game.
+ * Holds coins and provides useful functions.
+ * */
 class bank {
 public:
-    using coin_ptr = std::unique_ptr<coin>;
-    using coins_t  = std::vector<coin_ptr>;
+    using coin_ptr = std::unique_ptr<coin>; /**< Unique_ptr to coin define */
+    using coins_t =
+        std::vector<coin_ptr>; /**< Define for a containers of coins */
 
+    /** Constructor.
+     * @param size size of a bank
+     * */
     bank(const size_t& size = 0);
-    bot::property<coins_t> coins;
+    bot::property<coins_t> coins; /**< Coins of a bank, holded in a property */
 
+    /** Getter of coins.
+     * Removes coins from a bank and returns container with them.
+     * If bank doesn't have enough coins, throws exception.
+     * @param count parameter to get an amount of coins.
+     * @returns container with requested amount of coins
+     * */
     auto get_coins(const std::size_t& count) -> coins_t;
+
+    /** Adder of coins.
+     * Addes coins from a provided container to a bank and clears the container.
+     * @param coins container with coins to add to a bank.
+     * */
     void add_coins(coins_t& coins);
 };
 

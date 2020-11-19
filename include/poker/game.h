@@ -165,8 +165,7 @@ void game_poker::p_fill_hand(game::player_ptr pl) {
     p->add_card(std::move(card2));
 }
 auto game_poker::p_render_game_state() const -> std::string {
-    std::string mes;
-    mes = "Bank: " + p_render_coins(bank().coins());
+    auto mes = "Bank: " + p_render_coins(bank().coins());
     mes += "\nTable: ";
     for(auto& card: table()) {
         mes += p_render_card(card) + " ";
@@ -174,21 +173,37 @@ auto game_poker::p_render_game_state() const -> std::string {
     return mes;
 }
 auto game_poker::p_render_card(const card_ptr& c) const -> std::string {
-    std::string mes = std::to_string(c->value) + " " + c->kind.name;
+    auto mes = std::to_string(c->value) + " " + c->kind.name;
     return mes;
 }
 auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {
-    std::string mes = std::to_string(c.size());
+    auto mes = std::to_string(c.size());
     return mes;
 }
 void game_poker::p_send_state(const std::string& game_state,
                               game::player_ptr pl) {
-    auto mes = p_render_game_state();
+    auto mes   = p_render_game_state();
+    auto cast  = std::dynamic_pointer_cast<player_poker>(pl);
+    auto& bank = cast->bank();
+    if(cast == p_big_blind_pl) {
+        mes                = "Big blind bet is taken from you.";
+        auto big_blind_bet = bank.get_coins(this->p_big_blind_bet);
+        this->bank().add_coins(big_blind_bet);
+        if(bank.coins().size() == 0) {
+            mes += "\nYour bank is empty, game over.";
+            pl->send(mes);
+            return;
+        }
+    }
     mes += "\nYour bank:";
-    auto cast = std::dynamic_pointer_cast<player_poker>(pl);
     mes += p_render_coins(cast->bank().coins());
-    mes += "\nHand:" + p_render_card(cast->cards().at(0)) + " " +
-           p_render_card(cast->cards().at(1));
+    if(cast != p_small_blind_pl) {
+        mes += "\nHand:" + p_render_card(cast->cards().at(0)) + " " +
+               p_render_card(cast->cards().at(1));
+    } else {
+        mes = "\nTo open your cards, bet " +
+              std::to_string(p_big_blind_bet / 2) + " coins.";
+    }
     pl->send(mes);
 }
 

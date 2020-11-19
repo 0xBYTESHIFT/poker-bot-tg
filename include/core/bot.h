@@ -263,7 +263,7 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
     } else {
         response = "Welcome to room " + room->desc();
         user->current_room()->del_user(user); //delete from previous room
-        room->add_user(user);         //place in joined room
+        room->add_user(user);                 //place in joined room
         user->current_room() = room;          //save joined room in user too
 
         std::string broadcast_mes = "User " + user->desc() + " joined";
@@ -310,7 +310,8 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
         } else {
             room->del_user(user_kicked);      //remove user from kicked room
             s.lobby()->add_user(user_kicked); //place kicked user in lobby
-            user_kicked->current_room() = s.lobby();  //save lobby as user's new room
+            user_kicked->current_room() =
+                s.lobby(); //save lobby as user's new room
 
             api.sendMessage(user_kicked->id,
                             "You were kicked from room " + room->desc());
@@ -442,7 +443,8 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
             room->banned().emplace(user_banned);
             room->del_user(user_banned);      //remove user from room
             s.lobby()->add_user(user_banned); //place user in lobby
-            user_banned->current_room() = s.lobby();  //save lobby as user's new room
+            user_banned->current_room() =
+                s.lobby(); //save lobby as user's new room
 
             api.sendMessage(user_banned->id,
                             "You were banned in room " + room->desc());

@@ -11,19 +11,47 @@ namespace poker {
 
 class game_poker: public games::game {
 public:
-    using player_ptr = std::shared_ptr<player_poker>;
-    using card_ptr   = deck::card_ptr;
-    bot::property<class bank> bank;
-    bot::property<class deck> cards;
-    bot::property<std::vector<card_ptr>> table;
+    using player_ptr =
+        std::shared_ptr<player_poker>; /**< Define for poker player ptr */
+    using card_ptr = deck::card_ptr;   /**< Define for card ptr */
+    bot::property<class bank> bank;    /**< Bank property to hold coins */
+    bot::property<class deck> cards;   /**< Cards property to hold a deck */
+    bot::property<std::vector<card_ptr>>
+        table; /**< Cards on a table container property */
 
+    /** Constructor.
+     * @param users users of a room to add to the game as players.
+     * @param blind_bet size of a blind bet.
+     * */
     game_poker(const std::vector<bot::user_ptr>& users,
-               const std::size_t& bank_size, const std::size_t& blind_bet);
+               const std::size_t& blind_bet);
 
+    /** Function to add player.
+     * Adds user as a poker player if game is not in process and
+     * player is not in the game.
+     * @param user pointer to a user.
+     * @returns bool that is true if user was added.
+     * */
     auto add_player(const bot::user_ptr user) -> bool override;
+
+    /** Function to handle exited player.
+     * Throws exception if player is not a poker player or if
+     * he's not present in a game.
+     * WARNING:don't handles coins yet, TODO:fix it
+     * @param pl pointer to exited player.
+     * */
     void handle_exit(const game::player_ptr pl) override;
 
+    /** Game initiator.
+     * Refills deck, shuffles it, fills players hands and sends game states to them.
+     * */
     void init_game();
+
+    /** Player bet handler.
+     * Takes coins from a player if it's his turn, checks its size end advance game state.
+     * @param user pointer to a user that made a bet.
+     * @param size size of a bet.
+     * */
     void handle_bet(bot::user_ptr user, const std::size_t& size);
     void handle_fold(bot::user_ptr user);
 
@@ -45,10 +73,8 @@ private:
 };
 
 game_poker::game_poker(const std::vector<bot::user_ptr>& users,
-                       const std::size_t& bank_size,
                        const std::size_t& blind_bet):
-    games::game(),
-    bank(bank_size) {
+    games::game() {
     this->state()   = state::ended;
     p_last_bet      = 0;
     p_big_blind_bet = blind_bet;

@@ -124,10 +124,10 @@ void game_poker::init_game() {
     cards().shuffle();
     p_fill_table();
     const auto state = p_render_game_state();
-    if(players().size() > 1) {
+    if(players().size() >= 1) {
         p_big_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(0));
     }
-    if(players().size() > 2) {
+    if(players().size() >= 2) {
         p_small_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(1));
     }
     for(auto& pl: players()) {
@@ -255,7 +255,7 @@ void game_poker::p_send_state(const std::string& game_state,
                p_render_card(cast->cards().at(1));
     } else {
         mes = "\nTo open your cards, bet " +
-              std::to_string(p_big_blind_bet / 2) + " coins.";
+              std::to_string(p_big_blind_bet / 2) + " coins or fold.";
     }
     pl->send(mes);
 }

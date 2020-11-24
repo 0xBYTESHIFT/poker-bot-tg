@@ -93,7 +93,7 @@ auto game_poker::add_player(const bot::user_ptr user) -> bool {
         return false;
     }
     auto game_pl = players().emplace_back(new player_poker(user));
-    pl = bot::utils::dyn_cast<player_poker>(game_pl);
+    pl           = bot::utils::dyn_cast<player_poker>(game_pl);
     bank::coins_t temp;
     for(size_t i = 0; i < 100; i++) {
         temp.emplace_back(new poker::coin(1));
@@ -237,19 +237,19 @@ void game_poker::p_send_state(const std::string& game_state,
                               game::player_ptr pl) {
     auto mes   = p_render_game_state();
     auto cast  = std::dynamic_pointer_cast<player_poker>(pl);
-    auto& bank = cast->bank();
+    auto& pl_bank = cast->bank();
     if(cast == p_big_blind_pl) {
-        mes                = "Big blind bet is taken from you.";
-        auto big_blind_bet = bank.get_coins(this->p_big_blind_bet);
+        mes += "\nBig blind bet is taken from you.";
+        auto big_blind_bet = pl_bank.get_coins(this->p_big_blind_bet);
         this->bank().add_coins(big_blind_bet);
-        if(bank.coins().size() == 0) {
+        if(pl_bank.coins().size() == 0) {
             mes += "\nYour bank is empty, game over.";
             pl->send(mes);
             return;
         }
     }
     mes += "\nYour bank:";
-    mes += p_render_coins(cast->bank().coins());
+    mes += p_render_coins(pl_bank.coins());
     if(cast != p_small_blind_pl) {
         mes += "\nHand:" + p_render_card(cast->cards().at(0)) + " " +
                p_render_card(cast->cards().at(1));

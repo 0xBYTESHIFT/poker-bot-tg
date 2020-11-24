@@ -22,11 +22,15 @@ public:
     auto peek_card() const -> const card_ptr&;
 
 protected:
+    std::mt19937 gen;
+    std::random_device rd;
     deck_t m_cards;
 };
 
 deck::deck() {
+    this->gen = std::mt19937(rd());
     refill();
+    shuffle();
 }
 void deck::refill() {
     m_cards.clear();
@@ -44,7 +48,7 @@ void deck::refill() {
     }
 }
 void deck::shuffle() {
-    std::random_shuffle(m_cards.begin(), m_cards.end());
+    std::shuffle(m_cards.begin(), m_cards.end(), this->gen);
 }
 
 auto deck::get_cards() -> deck_t& {

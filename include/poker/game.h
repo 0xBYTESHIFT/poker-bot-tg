@@ -126,9 +126,11 @@ void game_poker::init_game() {
     const auto state = p_render_game_state();
     if(players().size() >= 1) {
         p_big_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(0));
+        p_cur_player = p_big_blind_pl;
     }
     if(players().size() >= 2) {
         p_small_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(1));
+        p_cur_player = p_small_blind_pl;
     }
     for(auto& pl: players()) {
         p_fill_hand(pl);
@@ -163,6 +165,7 @@ void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
     p_last_bet = size;
     std::move(coins.begin(), coins.begin() + size,
               std::back_inserter(game_bank));
+    coins.erase(coins.begin(), coins.begin() + size);
     p_advance_place();
     auto mes = pl->user()->desc() + " made a bet:" + std::to_string(size);
     for(auto& pl: players()) {
@@ -203,8 +206,9 @@ void game_poker::p_advance_place() {
     auto it = p_player_to_it(p_cur_player);
     if(*it == *players().rbegin()) {
         it = players().begin();
+    }else{
+        it++;
     }
-    it++;
     p_cur_player = dyn_cast<player_poker>(*it);
     p_cur_player->send("It's your turn.");
 }
@@ -235,8 +239,8 @@ auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {
 }
 void game_poker::p_send_state(const std::string& game_state,
                               game::player_ptr pl) {
-    auto mes   = p_render_game_state();
-    auto cast  = std::dynamic_pointer_cast<player_poker>(pl);
+    auto mes      = p_render_game_state();
+    auto cast     = std::dynamic_pointer_cast<player_poker>(pl);
     auto& pl_bank = cast->bank();
     if(cast == p_big_blind_pl) {
         mes += "\nBig blind bet is taken from you.";

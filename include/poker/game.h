@@ -67,6 +67,7 @@ private:
     auto p_user_to_player(const bot::user_ptr u) -> game_poker::player_ptr;
     void p_advance_place();
     void p_fill_hand(game::player_ptr pl);
+    void p_handle_bet(game::player_ptr pl, size_t);
     auto p_render_game_state() const -> std::string;
     auto p_render_card(const card_ptr& c) const -> std::string;
     auto p_render_coins(const bank::coins_t& c) const -> std::string;
@@ -126,16 +127,38 @@ void game_poker::init_game() {
     const auto state = p_render_game_state();
     if(players().size() >= 1) {
         p_big_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(0));
-        p_cur_player = p_big_blind_pl;
+        p_cur_player   = p_big_blind_pl;
     }
     if(players().size() >= 2) {
         p_small_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(1));
-        p_cur_player = p_small_blind_pl;
     }
     for(auto& pl: players()) {
         p_fill_hand(pl);
+    }
+    if(p_big_blind_pl) {
+        auto& bank = p_big_blind_pl->bank();
+        if(bank.coins().size() >= p_big_blind_bet) {
+            auto tmp = bank.get_coins(p_big_blind_bet);
+            this->bank().add_coins(tmp);
+            p_big_blind_pl->send("Big blind was taken from you");
+        } else {
+            //TODO:handle properly
+        }
+    }
+    if(p_small_blind_pl) {
+        auto& bank = p_small_blind_pl->bank();
+        if(bank.coins().size() >= p_big_blind_bet/2) {
+            auto tmp = bank.get_coins(p_big_blind_bet/2);
+            this->bank().add_coins(tmp);
+            p_small_blind_pl->send("Big blind was taken from you");
+        } else {
+            //TODO:handle properly
+        }
+    }
+    for(auto& pl: players()) {
         p_send_state(state, pl);
     }
+    p_advance_place(); //advance from big blind to small blind
 }
 void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
     auto pl = p_user_to_player(user);
@@ -146,31 +169,7 @@ void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
         pl->send("It's not your turn to make a bet");
         return;
     }
-    auto cast       = std::dynamic_pointer_cast<player_poker>(pl);
-    auto& coins     = cast->bank().coins();
-    auto& game_bank = bank().coins();
-    if(coins.size() < size) {
-        auto mes = "You can't make that bet, your bank is:" +
-                   std::to_string(coins.size());
-        pl->send(mes);
-        return;
-    }
-    if(size < p_last_bet) {
-        auto mes = "Your bet can't be lower than " + std::to_string(p_last_bet);
-        pl->send(mes);
-        return;
-    }
-    lgr << "poker: " << bot::utils::get_desc_log(user) << " made a bet:" << size
-        << "\n";
-    p_last_bet = size;
-    std::move(coins.begin(), coins.begin() + size,
-              std::back_inserter(game_bank));
-    coins.erase(coins.begin(), coins.begin() + size);
-    p_advance_place();
-    auto mes = pl->user()->desc() + " made a bet:" + std::to_string(size);
-    for(auto& pl: players()) {
-        pl->send(mes);
-    }
+    p_handle_bet(pl, size);
 }
 
 auto game_poker::p_player_to_it(game_poker::player_ptr p)
@@ -206,7 +205,7 @@ void game_poker::p_advance_place() {
     auto it = p_player_to_it(p_cur_player);
     if(*it == *players().rbegin()) {
         it = players().begin();
-    }else{
+    } else {
         it++;
     }
     p_cur_player = dyn_cast<player_poker>(*it);
@@ -220,6 +219,45 @@ void game_poker::p_fill_hand(game::player_ptr pl) {
 
     p->add_card(std::move(card1));
     p->add_card(std::move(card2));
+}
+void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
+    auto cast       = std::dynamic_pointer_cast<player_poker>(pl);
+    auto& coins     = cast->bank().coins();
+    auto& game_bank = bank().coins();
+    if(coins.size() < size) {
+        auto mes = "You can't make that bet, your bank is:" +
+                   std::to_string(coins.size());
+        pl->send(mes);
+        return;
+    }
+    if(cast == p_small_blind_pl) {
+        if(size != p_big_blind_bet / 2) {
+            auto mes = "Your bet can't be other than " +
+                       std::to_string(p_big_blind_bet / 2);
+            pl->send(mes);
+            return;
+        }
+    } else {
+        if(size < p_last_bet) {
+            auto mes = "Your bet can't be lower than " +
+                       std::to_string(p_last_bet / 2);
+            pl->send(mes);
+            return;
+        }
+    }
+    lgr << "poker: " << bot::utils::get_desc_log(pl->user)
+        << " made a bet:" << size << "\n";
+    if(cast != p_small_blind_pl) {
+        p_last_bet = size;
+    }
+    std::move(coins.begin(), coins.begin() + size,
+              std::back_inserter(game_bank));
+    coins.erase(coins.begin(), coins.begin() + size);
+    p_advance_place();
+    auto mes = pl->user()->desc() + " made a bet:" + std::to_string(size);
+    for(auto& pl: players()) {
+        pl->send(mes);
+    }
 }
 auto game_poker::p_render_game_state() const -> std::string {
     auto mes = "Bank: " + p_render_coins(bank().coins());
@@ -242,24 +280,14 @@ void game_poker::p_send_state(const std::string& game_state,
     auto mes      = p_render_game_state();
     auto cast     = std::dynamic_pointer_cast<player_poker>(pl);
     auto& pl_bank = cast->bank();
-    if(cast == p_big_blind_pl) {
-        mes += "\nBig blind bet is taken from you.";
-        auto big_blind_bet = pl_bank.get_coins(this->p_big_blind_bet);
-        this->bank().add_coins(big_blind_bet);
-        if(pl_bank.coins().size() == 0) {
-            mes += "\nYour bank is empty, game over.";
-            pl->send(mes);
-            return;
-        }
-    }
     mes += "\nYour bank:";
     mes += p_render_coins(pl_bank.coins());
     if(cast != p_small_blind_pl) {
         mes += "\nHand:" + p_render_card(cast->cards().at(0)) + " " +
                p_render_card(cast->cards().at(1));
     } else {
-        mes = "\nTo open your cards, bet " +
-              std::to_string(p_big_blind_bet / 2) + " coins or fold.";
+        mes += "\nTo open your cards, bet " +
+               std::to_string(p_big_blind_bet / 2) + " coins or fold.";
     }
     pl->send(mes);
 }
@@ -280,5 +308,4 @@ void game_poker::p_fill_table() {
         table().emplace_back(cards().get_card());
     }
 }
-
 }; // namespace poker

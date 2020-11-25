@@ -40,7 +40,7 @@ public:
 bank::bank(const size_t& size) {
     auto& vec = coins.get();
     vec.reserve(size);
-    for(auto i = 0; i < size; i++) {
+    for(size_t i = 0; i < size; i++) {
         vec.emplace_back(new coin(1));
     }
 }

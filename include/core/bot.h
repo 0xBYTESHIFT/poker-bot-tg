@@ -11,11 +11,11 @@
 #include <tgbot/tgbot.h>
 
 #define ROOM_BOT_PREPARE(mes)                                                  \
-    auto id   = mes->chat->id;                                                 \
-    auto& s   = *this->s.get();                                                \
-    auto tpl  = p_process_cmd(mes);                                            \
-    auto user = std::get<0>(tpl);                                              \
-    auto cmd  = std::get<1>(tpl);                                              \
+    [[maybe_unused]] auto id   = mes->chat->id;                                \
+    [[maybe_unused]] auto& s   = *this->s.get();                               \
+    [[maybe_unused]] auto tpl  = p_process_cmd(mes);                           \
+    [[maybe_unused]] auto user = std::get<0>(tpl);                             \
+    [[maybe_unused]] auto cmd  = std::get<1>(tpl);                             \
     if(!user || !cmd) {                                                        \
         return;                                                                \
     }
@@ -495,7 +495,7 @@ void room_bot::p_on_room_unban_request(mes_ptr mes) {
 }
 
 room_bot::room_bot(const std::string& token):
-    api(m_bot.getApi()), m_bot(token) {
+    m_bot(token), api(m_bot.getApi()) {
     this->s            = std::make_unique<server>();
     using args_t       = std::vector<std::string>;
     const auto no_args = args_t {};

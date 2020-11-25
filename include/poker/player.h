@@ -14,7 +14,7 @@ class player_poker: public games::player {
 public:
     using card_ptr = std::unique_ptr<class card>;
     using cards_t  = std::vector<card_ptr>;
-    using coin_ptr = std::unique_ptr<class coin>;
+    using coin_ptr = std::unique_ptr<struct coin>;
 
     player_poker(bot::user_ptr user);
 

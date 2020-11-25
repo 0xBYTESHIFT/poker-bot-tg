@@ -77,6 +77,8 @@ public:
      * Default constructor, initializes the lobby
      * */
     server();
+
+    virtual ~server(){};
     /**
      * Function to find a user by their's id.
      * @returns user_ptr if they are found

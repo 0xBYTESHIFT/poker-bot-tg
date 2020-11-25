@@ -51,6 +51,7 @@ find_fetch(TgBot https://github.com/reo7sp/tgbot-cpp)
 add_executable(tg-poker main.cpp)
 target_include_directories(tg-poker PRIVATE include)
 target_link_libraries(tg-poker TgBot)
+target_compile_options(tg-poker PRIVATE -Wall -Wextra)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

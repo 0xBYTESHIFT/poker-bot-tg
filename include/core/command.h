@@ -57,8 +57,8 @@ public:
     void invoke(mes_ptr mes);
 
 protected:
-    const std::string m_desc;              /**< Description of a command. */
     const std::string m_cmd_word;          /**< Command's name. */
+    const std::string m_desc;              /**< Description of a command. */
     const std::vector<std::string> m_args; /**< Command's args names. */
     const callback_t m_callback;           /**< Command's callback. */
 };

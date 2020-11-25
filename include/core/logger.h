@@ -17,7 +17,7 @@ public:
      * due to sinleton_token being protected in it.
      * @param token token to prevent user constructing of logger.
      * */
-    logger(base::singleton_token token) {}
+    logger([[maybe_unused]] base::singleton_token token) {}
 
     /**
      * Log any templated parameter to cout

@@ -61,6 +61,8 @@ private:
     player_ptr p_big_blind_pl;   /**< big blinded player */
     player_ptr p_small_blind_pl; /**< small blinded player */
     std::size_t p_big_blind_bet; /**< amount of required big blind */
+    std::map<game_poker::player_ptr, size_t>
+        p_bets_counter; /*<< container which represents players bets counts*/
 
     auto p_player_to_it(game_poker::player_ptr p) -> players_cont::iterator;
     auto p_it_to_player(players_cont::iterator it) -> game_poker::player_ptr;
@@ -115,6 +117,7 @@ void game_poker::handle_exit(const game::player_ptr pl) {
             "player in the poker game's exit handler is not present");
     }
     players().erase(players().begin() + i);
+    p_bets_counter.erase(std::const_pointer_cast<poker::player_poker>(cast));
     lgr << "poker: " << bot::utils::get_desc_log(pl->user())
         << " joined poker game\n";
     //TODO: handle cast->coins;
@@ -141,16 +144,17 @@ void game_poker::init_game() {
             auto tmp = bank.get_coins(p_big_blind_bet);
             this->bank().add_coins(tmp);
             p_big_blind_pl->send("Big blind was taken from you");
+            p_bets_counter[p_big_blind_pl]++;
         } else {
             //TODO:handle properly
         }
     }
     if(p_small_blind_pl) {
         auto& bank = p_small_blind_pl->bank();
-        if(bank.coins().size() >= p_big_blind_bet/2) {
-            auto tmp = bank.get_coins(p_big_blind_bet/2);
+        if(bank.coins().size() >= p_big_blind_bet / 2) {
+            auto tmp = bank.get_coins(p_big_blind_bet / 2);
             this->bank().add_coins(tmp);
-            p_small_blind_pl->send("Big blind was taken from you");
+            p_small_blind_pl->send("Small blind was taken from you");
         } else {
             //TODO:handle properly
         }
@@ -203,6 +207,10 @@ auto game_poker::p_user_to_player(const bot::user_ptr u)
 void game_poker::p_advance_place() {
     using namespace bot::utils;
     auto it = p_player_to_it(p_cur_player);
+    if(it == players().end()) {
+        throw std::runtime_error(
+            "player iterator doesn't hold poker player ptr");
+    }
     if(*it == *players().rbegin()) {
         it = players().begin();
     } else {
@@ -258,6 +266,25 @@ void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
     for(auto& pl: players()) {
         pl->send(mes);
     }
+
+    p_bets_counter[cast]++;
+    {
+        size_t prev_bet_cnt = p_bets_counter.begin()->second;
+        bool equals         = true;
+        for(auto [pl_ptr, count]: p_bets_counter) {
+            equals = (prev_bet_cnt == count);
+            if(!equals) {
+                break;
+            }
+        }
+        if(equals) {
+            if(table().size() != 5) {
+                p_fill_table();
+            } else {
+                //TODO:handle properly
+            }
+        }
+    }
 }
 auto game_poker::p_render_game_state() const -> std::string {
     auto mes = "Bank: " + p_render_coins(bank().coins());
@@ -277,7 +304,7 @@ auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {
 }
 void game_poker::p_send_state(const std::string& game_state,
                               game::player_ptr pl) {
-    auto mes      = p_render_game_state();
+    auto mes      = game_state;
     auto cast     = std::dynamic_pointer_cast<player_poker>(pl);
     auto& pl_bank = cast->bank();
     mes += "\nYour bank:";

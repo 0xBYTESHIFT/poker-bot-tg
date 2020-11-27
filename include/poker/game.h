@@ -23,8 +23,7 @@ public:
      * @param users users of a room to add to the game as players.
      * @param blind_bet size of a blind bet.
      * */
-    game_poker(const std::vector<bot::user_ptr>& users,
-               const std::size_t& blind_bet);
+    game_poker(const std::vector<bot::user_ptr>& users, std::size_t blind_bet);
 
     /** Function to add player.
      * Adds user as a poker player if game is not in process and
@@ -52,7 +51,7 @@ public:
      * @param user pointer to a user that made a bet.
      * @param size size of a bet.
      * */
-    void handle_bet(bot::user_ptr user, const std::size_t& size);
+    void handle_bet(bot::user_ptr user, std::size_t size);
     void handle_fold(bot::user_ptr user);
 
 private:
@@ -78,7 +77,7 @@ private:
 };
 
 game_poker::game_poker(const std::vector<bot::user_ptr>& users,
-                       const std::size_t& blind_bet):
+                       std::size_t blind_bet):
     games::game() {
     this->state()   = state::ended;
     p_last_bet      = 0;
@@ -164,7 +163,7 @@ void game_poker::init_game() {
     }
     p_advance_place(); //advance from big blind to small blind
 }
-void game_poker::handle_bet(bot::user_ptr user, const std::size_t& size) {
+void game_poker::handle_bet(bot::user_ptr user, std::size_t size) {
     auto pl = p_user_to_player(user);
     if(!pl) {
         return;

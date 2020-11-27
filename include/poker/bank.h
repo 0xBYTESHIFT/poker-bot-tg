@@ -19,7 +19,7 @@ public:
     /** Constructor.
      * @param size size of a bank
      * */
-    bank(const size_t& size = 0);
+    bank(size_t size = 0);
     bot::property<coins_t> coins; /**< Coins of a bank, holded in a property */
 
     /** Getter of coins.
@@ -28,7 +28,7 @@ public:
      * @param count parameter to get an amount of coins.
      * @returns container with requested amount of coins
      * */
-    auto get_coins(const std::size_t& count) -> coins_t;
+    auto get_coins(std::size_t count) -> coins_t;
 
     /** Adder of coins.
      * Addes coins from a provided container to a bank and clears the container.
@@ -37,7 +37,7 @@ public:
     void add_coins(coins_t& coins);
 };
 
-bank::bank(const size_t& size) {
+bank::bank(size_t size) {
     auto& vec = coins.get();
     vec.reserve(size);
     for(size_t i = 0; i < size; i++) {
@@ -45,7 +45,7 @@ bank::bank(const size_t& size) {
     }
 }
 
-auto bank::get_coins(const std::size_t& count) -> bank::coins_t {
+auto bank::get_coins(std::size_t count) -> bank::coins_t {
     auto& coins = this->coins();
     coins_t result;
     if(count > coins.size()) {

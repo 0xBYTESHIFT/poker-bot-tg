@@ -13,10 +13,10 @@ struct kind {
     virtual ~kind() {};
 
     kind(const kind& rhs) = delete;
-    kind(const size_t& id, const std::string& name, const cards_color& color);
+    kind(size_t id, const std::string& name, const cards_color& color);
 };
 
-kind::kind(const size_t& id, const std::string& name, const cards_color& color):
+kind::kind(size_t id, const std::string& name, const cards_color& color):
     id(id), name(name), color(color) {}
 
 static inline const kind hearts(0, "hearts", cards_color::red);

@@ -61,7 +61,7 @@ private:
     player_ptr p_small_blind_pl; /**< small blinded player */
     std::size_t p_big_blind_bet; /**< amount of required big blind */
     std::map<game_poker::player_ptr, size_t>
-        p_bets_counter; /**< container which represents players bets counts*/
+        p_bets; /**< container which represents players bets summ*/
     bool p_small_blind_made_bet; /**< flag to indicate small bet status */
 
     auto p_player_to_it(game_poker::player_ptr p) -> players_cont::iterator;
@@ -118,7 +118,7 @@ void game_poker::handle_exit(const game::player_ptr pl) {
             "player in the poker game's exit handler is not present");
     }
     players().erase(players().begin() + i);
-    p_bets_counter.erase(std::const_pointer_cast<poker::player_poker>(cast));
+    p_bets.erase(std::const_pointer_cast<poker::player_poker>(cast));
     lgr << "poker: " << bot::utils::get_desc_log(pl->user())
         << " joined poker game\n";
 }
@@ -127,7 +127,6 @@ void game_poker::init_game() {
     cards().refill();
     cards().shuffle();
     p_fill_table();
-    const auto state = p_render_game_state();
     if(players().size() >= 1) {
         p_big_blind_pl = bot::utils::dyn_cast<player_poker>(players().at(0));
         p_cur_player   = p_big_blind_pl;
@@ -139,26 +138,36 @@ void game_poker::init_game() {
         p_fill_hand(pl);
     }
     if(p_big_blind_pl) {
-        auto& bank = p_big_blind_pl->bank();
-        if(bank.coins().size() >= p_big_blind_bet) {
-            auto tmp = bank.get_coins(p_big_blind_bet);
+        auto tmp_pl   = p_big_blind_pl;
+        auto bet_size = p_big_blind_bet;
+        auto& bank    = tmp_pl->bank();
+        if(bank.coins().size() >= bet_size) {
+            auto tmp = bank.get_coins(bet_size);
             this->bank().add_coins(tmp);
-            p_big_blind_pl->send("Big blind was taken from you");
-            p_bets_counter[p_big_blind_pl]++;
+            auto mes = "Big blind was taken from you (" +
+                       std::to_string(bet_size) + ")";
+            tmp_pl->send(std::move(mes));
+            p_bets[tmp_pl] += bet_size;
         } else {
             //TODO:handle properly
         }
     }
     if(p_small_blind_pl) {
-        auto& bank = p_small_blind_pl->bank();
-        if(bank.coins().size() >= p_big_blind_bet / 2) {
-            auto tmp = bank.get_coins(p_big_blind_bet / 2);
+        auto tmp_pl   = p_big_blind_pl;
+        auto bet_size = p_big_blind_bet / 2;
+        auto& bank    = tmp_pl->bank();
+        if(bank.coins().size() >= bet_size) {
+            auto tmp = bank.get_coins(bet_size);
             this->bank().add_coins(tmp);
-            p_small_blind_pl->send("Small blind was taken from you");
+            auto mes = "Small blind was taken from you (" +
+                       std::to_string(bet_size) + ")";
+            tmp_pl->send(mes);
+            p_bets[tmp_pl] += bet_size;
         } else {
             //TODO:handle properly
         }
     }
+    const auto state = p_render_game_state();
     for(auto& pl: players()) {
         p_send_state(state, pl);
     }
@@ -264,17 +273,19 @@ void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
               std::back_inserter(game_bank));
     coins.erase(coins.begin(), coins.begin() + size);
     p_advance_place();
+    /*
     auto mes = pl->user()->desc() + " made a bet:" + std::to_string(size);
     for(auto& pl: players()) {
         pl->send(mes);
     }
+    */
 
-    p_bets_counter[cast]++;
+    p_bets[cast] += size;
     {
-        size_t prev_bet_cnt = p_bets_counter.begin()->second;
-        bool equals         = true;
-        for(auto [pl_ptr, count]: p_bets_counter) {
-            equals = (prev_bet_cnt == count);
+        size_t prev_bet = p_bets.begin()->second;
+        bool equals     = true;
+        for(auto [pl_ptr, count]: p_bets) {
+            equals = (prev_bet == count);
             if(!equals) {
                 break;
             }
@@ -282,14 +293,17 @@ void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
         if(equals) {
             if(table().size() != 5) {
                 p_fill_table();
-                auto state = p_render_game_state();
-                for(auto& pl: players()) {
-                    p_send_state(state, pl);
+                for(auto& el: p_bets) {
+                    el.second = 0;
                 }
             } else {
                 //TODO:handle properly
             }
         }
+    }
+    auto state = p_render_game_state();
+    for(auto& pl: players()) {
+        p_send_state(state, pl);
     }
 }
 auto game_poker::p_render_game_state() const -> std::string {
@@ -297,6 +311,9 @@ auto game_poker::p_render_game_state() const -> std::string {
     mes += "\nTable: ";
     for(auto& card: table()) {
         mes += p_render_card(card) + " ";
+    }
+    for(auto [pl_ptr, count]: p_bets) {
+        mes += "\n" + pl_ptr->user()->desc() + " bet:" + std::to_string(count);
     }
     return mes;
 }

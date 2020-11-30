@@ -153,7 +153,7 @@ void game_poker::init_game() {
         }
     }
     if(p_small_blind_pl) {
-        auto tmp_pl   = p_big_blind_pl;
+        auto tmp_pl   = p_small_blind_pl;
         auto bet_size = p_big_blind_bet / 2;
         auto& bank    = tmp_pl->bank();
         if(bank.coins().size() >= bet_size) {

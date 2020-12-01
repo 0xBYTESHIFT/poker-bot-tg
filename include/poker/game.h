@@ -81,7 +81,6 @@ game_poker::game_poker(const std::vector<bot::user_ptr>& users,
                        std::size_t blind_bet):
     games::game() {
     this->state()          = state::ended;
-    p_last_bet             = 0;
     p_big_blind_bet        = blind_bet;
     p_small_blind_made_bet = false;
     for(auto& u: users) {
@@ -148,6 +147,7 @@ void game_poker::init_game() {
                        std::to_string(bet_size) + ")";
             tmp_pl->send(std::move(mes));
             p_bets[tmp_pl] += bet_size;
+            p_last_bet = bet_size;
         } else {
             //TODO:handle properly
         }
@@ -247,27 +247,27 @@ void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
         pl->send(mes);
         return;
     }
-    if(cast == p_small_blind_pl && !p_small_blind_made_bet) {
-        if(size != p_big_blind_bet / 2) {
+    if(cast == p_small_blind_pl) {
+        if(!p_small_blind_made_bet && size != p_big_blind_bet / 2) {
             auto mes = "Your bet can't be other than " +
                        std::to_string(p_big_blind_bet / 2);
             pl->send(mes);
             return;
+        } else {
+            p_small_blind_made_bet = true;
         }
     } else {
-        if(size < p_last_bet) {
+        if(p_bets[cast]+size < p_last_bet) {
             auto mes = "Your bet can't be lower than " +
-                       std::to_string(p_last_bet / 2);
+                       std::to_string(p_last_bet - p_bets[cast]);
             pl->send(mes);
             return;
         }
     }
     lgr << "poker: " << bot::utils::get_desc_log(pl->user)
         << " made a bet:" << size << "\n";
-    if(cast != p_small_blind_pl) {
-        p_last_bet = size;
-    } else {
-        p_small_blind_made_bet = true;
+    if(p_bets[cast] > p_last_bet) {
+        p_last_bet = p_bets[cast];
     }
     std::move(coins.begin(), coins.begin() + size,
               std::back_inserter(game_bank));

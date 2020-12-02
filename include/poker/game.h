@@ -257,7 +257,7 @@ void game_poker::p_handle_bet(game::player_ptr pl, size_t size) {
             p_small_blind_made_bet = true;
         }
     } else {
-        if(p_bets[cast]+size < p_last_bet) {
+        if(p_bets[cast] + size < p_last_bet) {
             auto mes = "Your bet can't be lower than " +
                        std::to_string(p_last_bet - p_bets[cast]);
             pl->send(mes);
@@ -318,7 +318,20 @@ auto game_poker::p_render_game_state() const -> std::string {
     return mes;
 }
 auto game_poker::p_render_card(const card_ptr& c) const -> std::string {
-    auto mes = std::to_string(c->value) + " " + c->kind.name;
+    const static std::map<std::string, std::string> kind_to_emoji {
+        {"pikes", "\xE2\x99\xA0"},
+        {"hearts", "\xE2\x99\xA5"},
+        {"tiles", "\xE2\x99\xA6"},
+        {"clovers", "\xE2\x99\xA3"}};
+    const static std::map<int, std::string> value_to_letter {
+        {10, "J"}, {11, "D"}, {12, "K"}, {13, "A"}};
+    std::string mes;
+    if(c->value < 10) {
+        mes += std::to_string(c->value);
+    } else {
+        mes += value_to_letter.at(c->value);
+    }
+    mes += " " + kind_to_emoji.at(c->kind.name);
     return mes;
 }
 auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {

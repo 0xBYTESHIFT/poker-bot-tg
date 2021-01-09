@@ -26,32 +26,12 @@ else (DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
-include(FetchContent)
-include(CheckCXXCompilerFlag)
-
-macro(find_fetch package repo)
-    find_package(${package} QUIET)
-    if(NOT ${${package}_FOUND})
-        message(STATUS "fetching ${package} from ${repo}")
-        FetchContent_Declare(${package}
-            GIT_REPOSITORY ${repo}
-            GIT_SHALLOW true
-        )
-        FetchContent_MakeAvailable(${package})
-        FetchContent_GetProperties(${package})
-        if(NOT ${${package}_POPULATED})
-          FetchContent_Populate(${package})
-          add_subdirectory(${${package}_SOURCE_DIR} ${${package}_BINARY_DIR})
-        endif(NOT ${${package}_POPULATED})
-        list(APPEND CMAKE_PREFIX_PATH ${${package}_BINARY_DIR})
-    endif(NOT ${${package}_FOUND})
-endmacro()
-
-find_fetch(TgBot https://github.com/reo7sp/tgbot-cpp)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
 add_executable(tg-poker main.cpp)
 target_include_directories(tg-poker PRIVATE include)
-target_link_libraries(tg-poker TgBot)
+target_link_libraries(tg-poker ${CONAN_LIBS})
 target_compile_options(tg-poker PRIVATE -Wall -Wextra)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

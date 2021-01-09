@@ -1,0 +1,7 @@
+[requires]
+tgbot/1.2.1
+
+[options]
+
+[generators]
+cmake

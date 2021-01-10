@@ -2,7 +2,9 @@
 #include "poker/card.h"
 #include "poker/kinds.h"
 
+#include <algorithm>
 #include <memory>
+#include <random>
 #include <vector>
 
 namespace poker {
@@ -43,7 +45,7 @@ void deck::refill() {
             (kind_index == 0) ?
                 hearts :
                 (kind_index == 1) ? tiles : (kind_index == 2) ? clovers : pikes;
-        auto value = (i % 13);
+        auto value = (i % 13)+2;
         m_cards.emplace_back(new card(value, kind));
     }
 }

@@ -27,8 +27,7 @@ public:
 protected:
 };
 
-player_poker::player_poker(bot::user_ptr user): games::player(user),
-    bank(0) {}
+player_poker::player_poker(bot::user_ptr user): games::player(user), bank(0) { }
 
 void player_poker::clear_cards() {
     this->cards().clear();

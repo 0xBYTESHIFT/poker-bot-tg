@@ -24,8 +24,7 @@ public:
     user(id_t id);
 
     property<room_ptr> current_room = nullptr; /**< Room where user currently is */
-    property<token_t> token =
-        ""; /**< User's token to refer to them in commands */
+    property<token_t> token         = "";      /**< User's token to refer to them in commands */
 
     /**
      * User's description, consists of user's name and token.
@@ -34,7 +33,7 @@ public:
     virtual std::string desc() const;
 };
 
-user::user(id_t id): identifyable(id) {}
+user::user(id_t id): identifyable(id) { }
 
 std::string user::desc() const {
     return name() + "[" + token() + "]";

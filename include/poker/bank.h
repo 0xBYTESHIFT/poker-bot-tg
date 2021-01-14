@@ -13,8 +13,7 @@ namespace poker {
 class bank {
 public:
     using coin_ptr = std::unique_ptr<coin>; /**< Unique_ptr to coin define */
-    using coins_t =
-        std::vector<coin_ptr>; /**< Define for a containers of coins */
+    using coins_t  = std::vector<coin_ptr>; /**< Define for a containers of coins */
 
     /** Constructor.
      * @param size size of a bank
@@ -49,8 +48,7 @@ auto bank::get_coins(std::size_t count) -> bank::coins_t {
     auto& coins = this->coins();
     coins_t result;
     if(count > coins.size()) {
-        auto mes = "Attempt to get " + std::to_string(count) +
-                   "coins from a bank with size " + std::to_string(count);
+        auto mes = "Attempt to get " + std::to_string(count) + "coins from a bank with size " + std::to_string(count);
         throw std::runtime_error(mes);
     }
     result.reserve(count);

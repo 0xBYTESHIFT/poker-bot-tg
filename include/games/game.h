@@ -1,27 +1,26 @@
 #pragma once
+#include "components/logger.hpp"
 #include "core/lazy_utils.h"
 #include "core/logger.h"
+#include "core/logging_obj.h"
 #include "core/property.h"
 #include "games/player.h"
 
 #include <vector>
-
 namespace games {
 
 /**
  * Class to be inherited for games classes.
  * */
-class game {
+class game: public bot::logging_obj {
+protected:
 public:
-    using player_ptr =
-        std::shared_ptr<player>; /**< Define for player pointer type. */
-    using players_cont =
-        std::vector<player_ptr>; /**< Define for player's container. */
+    using player_ptr   = std::shared_ptr<player>; /**< Define for player pointer type. */
+    using players_cont = std::vector<player_ptr>; /**< Define for player's container. */
 
     bot::property<players_cont> players; /**< Property storing players. */
     enum class state { playing, ended };
     bot::property<enum state> state; /**< Game state. */
-    bot::logger& lgr;                /**< Reference to a logger(singleton). */
 
     /**
      * Default constructor.
@@ -62,13 +61,12 @@ public:
     virtual void del_player(const player_ptr& pl);
 };
 
-game::game(): lgr(bot::logger::get_instance()) {}
+game::game() { }
 
 game::~game() {};
 
 auto game::is_playing(const bot::user_ptr user) const -> bool {
-    return bot::utils::contains_if(
-        players(), [&user](auto pl) { return pl->user() == user; });
+    return bot::utils::contains_if(players(), [&user](auto pl) { return pl->user() == user; });
 }
 
 void game::del_player(const player_ptr& pl) {

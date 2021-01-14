@@ -17,7 +17,7 @@ public:
     card(unsigned value, const struct kind& k);
 };
 
-card::card(card&& k): value(std::move(k.value)), kind(k.kind) {}
-card::card(unsigned value, const struct kind& k): value(value), kind(k) {}
+card::card(card&& k): value(std::move(k.value)), kind(k.kind) { }
+card::card(unsigned value, const struct kind& k): value(value), kind(k) { }
 
 }; // namespace poker

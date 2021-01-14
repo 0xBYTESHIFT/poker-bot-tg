@@ -11,9 +11,8 @@ namespace bot {
  * */
 class command {
 public:
-    using name_t = std::string; /**< Name type define. */
-    using callback_t =
-        std::function<void(mes_ptr)>; /**< Callback type define. */
+    using name_t     = std::string;                  /**< Name type define. */
+    using callback_t = std::function<void(mes_ptr)>; /**< Callback type define. */
 
     /**
      * Command's constructor.
@@ -22,8 +21,8 @@ public:
      * @param args vector for command's arguments names.
      * @param callback callback to be called when command is entered correctly.
      * */
-    command(const name_t& name, const std::string& desc,
-            const std::vector<std::string>& args, const callback_t& callback);
+    command(const name_t& name, const std::string& desc, const std::vector<std::string>& args,
+            const callback_t& callback);
 
     /**
      * Returns info about using a command. Example: "/kick [user_token]".
@@ -63,11 +62,10 @@ protected:
     const callback_t m_callback;           /**< Command's callback. */
 };
 
-command::command(const name_t& name, const std::string& desc,
-                 const std::vector<std::string>& args,
+command::command(const name_t& name, const std::string& desc, const std::vector<std::string>& args,
                  const callback_t& callback):
     m_cmd_word(name),
-    m_desc(desc), m_args(args), m_callback(callback) {}
+    m_desc(desc), m_args(args), m_callback(callback) { }
 auto command::usage() const -> std::string {
     std::string usage = "Usage: /" + m_cmd_word;
     for(auto& arg: m_args) {

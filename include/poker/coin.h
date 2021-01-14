@@ -12,7 +12,7 @@ struct coin {
     coin(coin&& rhs);
 };
 
-coin::coin(std::size_t value): value(value) {}
-coin::coin(coin&& rhs): value(std::move(rhs.value)) {}
+coin::coin(std::size_t value): value(value) { }
+coin::coin(coin&& rhs): value(std::move(rhs.value)) { }
 
 }; // namespace poker

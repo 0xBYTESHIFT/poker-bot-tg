@@ -10,8 +10,7 @@ namespace games {
  * */
 class game_room: public bot::room {
 public:
-    using game_ptr =
-        std::unique_ptr<games::game>; /**< Define for game pointer. */
+    using game_ptr = std::unique_ptr<games::game>; /**< Define for game pointer. */
 
     bot::property<game_ptr> game; /**< Property storing game. */
 
@@ -31,14 +30,13 @@ public:
     virtual void del_user(bot::user_ptr user) override;
 };
 
-game_room::game_room(id_t id): bot::room(id) {}
+game_room::game_room(id_t id): bot::room(id) { }
 
 void game_room::del_user(bot::user_ptr user) {
     if(!game()) {
         return; //no need to delete player from game
     }
-    auto player_it = bot::utils::find_if(
-        game()->players(), [&](auto pl) { return pl->user() == user; });
+    auto player_it = bot::utils::find_if(game()->players(), [&](auto pl) { return pl->user() == user; });
     if(player_it != game()->players().end()) {
         game()->handle_exit(*player_it);
         try {

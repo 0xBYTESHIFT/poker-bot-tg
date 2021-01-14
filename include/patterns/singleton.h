@@ -37,7 +37,7 @@ protected:
     /**
      * Token to prevent derived classes to be constructed not like a singleton.
      * */
-    struct singleton_token {};
+    struct singleton_token { };
     /**
      * Default constructor for derived classes to use.
      * */

@@ -15,8 +15,7 @@ class player {
 protected:
     std::queue<std::string> mes_to_send; /**< Messages queue to send to user. */
 public:
-    bot::property<bot::user_ptr>
-        user; /**< Property storing bot's user pointer. */
+    bot::property<bot::user_ptr> user; /**< Property storing bot's user pointer. */
 
     /**
      * Constructor.
@@ -49,8 +48,8 @@ public:
     auto mes_queue() -> std::queue<std::string>&;
 };
 
-player::player(bot::user_ptr user): user(user) {}
-player::~player() {}
+player::player(bot::user_ptr user): user(user) { }
+player::~player() { }
 
 bool operator==(const player& lhs, const player& rhs) {
     return lhs.user() == rhs.user();

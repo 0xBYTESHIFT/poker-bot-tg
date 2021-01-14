@@ -39,10 +39,7 @@ void deck::refill() {
     m_cards.reserve(size);
     for(unsigned i = 0; i < size; ++i) {
         const auto kind_index = (i / 13);
-        auto& kind =
-            (kind_index == 0) ?
-                hearts :
-                (kind_index == 1) ? tiles : (kind_index == 2) ? clovers : pikes;
+        auto& kind = (kind_index == 0) ? hearts : (kind_index == 1) ? tiles : (kind_index == 2) ? clovers : pikes;
         auto value = (i % 13);
         m_cards.emplace_back(new card(value, kind));
     }

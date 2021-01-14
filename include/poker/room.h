@@ -11,7 +11,7 @@ public:
     void start_game();
 };
 
-game_poker_room::game_poker_room(id_t id): games::game_room(id) {}
+game_poker_room::game_poker_room(id_t id): games::game_room(id) { }
 
 void game_poker_room::start_game() {
     auto& user_ptrs_vec = this->users();

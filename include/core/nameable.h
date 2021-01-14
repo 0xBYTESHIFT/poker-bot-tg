@@ -26,7 +26,7 @@ public:
     property<name_t> name; /**< Name of derived class object */
 };
 
-nameable::nameable(const name_t name): name(name) {}
-nameable::~nameable() {}
+nameable::nameable(const name_t name): name(name) { }
+nameable::~nameable() { }
 
 }; // namespace bot

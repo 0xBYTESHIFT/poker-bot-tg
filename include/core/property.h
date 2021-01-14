@@ -15,7 +15,7 @@ public:
     /**
      * Default constructor, does nothing special
      */
-    property() {}
+    property() { }
 
     /**
      * Args forward constructor \n
@@ -23,7 +23,7 @@ public:
      * @param args arguments to be passed to value's constructor
      */
     template<class... Args>
-    property(Args... args): m_value(args...) {}
+    property(Args... args): m_value(args...) { }
 
     /**
      * Copy/move constructor \n
@@ -32,7 +32,7 @@ public:
      * @param rhs property on the rhs that will be copied or moved into property's value
      */
     template<class Arg>
-    property(Arg&& rhs): m_value(std::forward<Arg>(rhs)) {}
+    property(Arg&& rhs): m_value(std::forward<Arg>(rhs)) { }
 
     /**
      * Call operator, returns reference to value \n
@@ -48,12 +48,12 @@ public:
      * Pointer operator, returns value's call operator result reference \n
      * @return reference to value's call operator
      */
-    auto& operator-> () { return m_value(); }
+    auto& operator->() { return m_value(); }
     /**
      * Const pointer operator, returns value's call operator result reference \n
      * @return const reference to value's call operator
      */
-    auto& operator-> () const { return m_value(); }
+    auto& operator->() const { return m_value(); }
     /**
      * Setter, copies rhs into the value \n
      * @param rhs value to copy
@@ -102,9 +102,7 @@ public:
      * @param lhs left parameter to compare. 
      * @returns true if parameters are equal, false of not.
      * */
-    friend bool operator==(const property<T>& lhs, const property<T>& rhs) {
-        return lhs() == rhs();
-    }
+    friend bool operator==(const property<T>& lhs, const property<T>& rhs) { return lhs() == rhs(); }
 };
 
 }; // namespace bot

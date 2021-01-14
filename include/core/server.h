@@ -1,5 +1,7 @@
 #pragma once
+#include "components/logger.hpp"
 #include "core/datatypes.h"
+#include "core/logging_obj.h"
 #include "core/property.h"
 #include "core/room.h"
 #include "core/user.h"
@@ -17,11 +19,9 @@ namespace bot {
  * Utility class to generate random tokens.
  * */
 class token_generator {
-    static inline std::set<std::string>
-        p_tokens; /**< Set to keep already generated tokens */
-    const static size_t p_token_len = 8; /**< Define for token's length */
-    const static inline std::string
-        p_alphabet = /**< Alphabet for generating tokens */
+    static inline std::set<std::string> p_tokens;   /**< Set to keep already generated tokens */
+    const static size_t p_token_len            = 8; /**< Define for token's length */
+    const static inline std::string p_alphabet =    /**< Alphabet for generating tokens */
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 public:
@@ -41,8 +41,7 @@ std::string token_generator::gen() {
     std::string result(p_token_len, ' ');
     bool end = false;
     do {
-        std::generate(result.begin(), result.end(),
-                      [&]() { return p_alphabet.at(dist(p_gen)); });
+        std::generate(result.begin(), result.end(), [&]() { return p_alphabet.at(dist(p_gen)); });
         if(p_tokens.find(result) == p_tokens.end()) {
             end = true;
             p_tokens.emplace(result);
@@ -54,20 +53,17 @@ std::string token_generator::gen() {
 /**
  * Server class to hold users and rooms
  * */
-class server {
-    static inline id_t p_last_room_id =
-        0; /**< Last room id to keep generated room's unique */
+class server: public logging_obj {
+    static inline id_t p_last_room_id = 0; /**< Last room id to keep generated room's unique */
 protected:
-    logger& lgr; /**< Logger reference */
     /**
      * Function to return new room's id
      * */
     id_t p_get_room_id();
 
 public:
-    using room_cont = std::vector<room_ptr>; /**< Define for rooms container */
-    using user_cont = std::map<identifyable::id_t,
-                               user_ptr>; /**< Define for users container */
+    using room_cont = std::vector<room_ptr>;                  /**< Define for rooms container */
+    using user_cont = std::map<identifyable::id_t, user_ptr>; /**< Define for users container */
 
     property<room_cont> rooms = {};      /**< Rooms' pointers container */
     property<room_ptr> lobby  = nullptr; /**< Pointer to the lobby room */
@@ -78,7 +74,7 @@ public:
      * */
     server();
 
-    virtual ~server(){};
+    virtual ~server() {};
     /**
      * Function to find a user by their's id.
      * @returns user_ptr if they are found
@@ -113,7 +109,7 @@ public:
     virtual void on_room_empty(room_ptr room);
 };
 
-server::server(): lgr(logger::get_instance()) {
+server::server() {
     lobby            = std::make_shared<room>(0);
     lobby()->name    = std::string("lobby");
     lobby()->token() = token_generator::gen();
@@ -132,9 +128,7 @@ user_ptr server::get_user(id_t id) const {
 }
 
 room_ptr server::get_room(const room::token_t& token) const {
-    auto room_it =
-        std::find_if(rooms().begin(), rooms().end(),
-                     [&token](auto room) { return room->token() == token; });
+    auto room_it = std::find_if(rooms().begin(), rooms().end(), [&token](auto room) { return room->token() == token; });
     if(room_it != rooms().end()) {
         return *room_it;
     }
@@ -147,12 +141,11 @@ room_ptr server::create_room(user_ptr user) {
     auto room     = std::make_shared<class room>(p_get_room_id());
     room->token() = token_generator::gen();
     room->add_user(user);
-    room->owner() = user;
-    user->current_room()  = room;
+    room->owner()        = user;
+    user->current_room() = room;
     rooms().emplace_back(room);
 
-    lgr << "server: user" << utils::get_desc_log(user) << " created room"
-        << utils::get_desc(room) << "\n";
+    m_lgr << "server: user" << utils::get_desc_log(user) << " created room" << utils::get_desc(room) << "\n";
     return room;
 }
 
@@ -167,12 +160,11 @@ void server::on_user_disconnect(user_ptr user) {
 
 void server::on_room_empty(room_ptr room) {
     if(!room->users().empty()) {
-        lgr << "E server: called on_empty handler on non-empty room"
-            << bot::utils::get_desc(room) << "\n";
+        m_lgr << "E server: called on_empty handler on non-empty room" << bot::utils::get_desc(room) << "\n";
         return;
     }
     if(utils::erase(rooms(), room)) {
-        lgr << "server: room" << bot::utils::get_desc(room) << " removed\n";
+        m_lgr << "server: room" << bot::utils::get_desc(room) << " removed\n";
     } else {
         throw std::runtime_error("no such room in the server to delete");
     }

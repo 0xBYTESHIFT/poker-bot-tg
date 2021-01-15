@@ -35,6 +35,8 @@ public:
     auto set_level(level l) -> void;
     auto get_level() const -> logger::level;
     auto context(std::shared_ptr<spdlog::async_logger> logger) noexcept -> void;
+    auto get_internal_logger() const -> std::shared_ptr<const spdlog::logger>;
+    auto get_internal_logger() -> std::shared_ptr<spdlog::logger>;
 
     template<typename MSGBuilder>
     auto log(MSGBuilder&& msg_builder) noexcept -> void {
@@ -137,6 +139,12 @@ auto logger::get_level() const -> logger::level {
 
 auto logger::context(std::shared_ptr<spdlog::async_logger> logger) noexcept -> void {
     logger_ = std::move(logger);
+}
+auto logger::get_internal_logger() const -> std::shared_ptr<const spdlog::logger>{
+    return this->logger_;
+}
+auto logger::get_internal_logger() -> std::shared_ptr<spdlog::logger>{
+    return this->logger_;
 }
 
 auto initialization_logger(const std::string& prefix) -> logger {

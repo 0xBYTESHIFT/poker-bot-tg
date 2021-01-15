@@ -31,12 +31,22 @@ public:
      * @returns user's description
      * */
     virtual std::string desc() const;
+
+    /**
+     * User's description, consists of user's name, tg ID and token.
+     * @returns user's description
+     * */
+    virtual std::string log_desc() const;
 };
 
 user::user(id_t id): identifyable(id) { }
 
 std::string user::desc() const {
     return name() + "[" + token() + "]";
+}
+
+std::string user::log_desc() const {
+    return name() + "[tk:" + token() + "][id:" + std::to_string(id()) + "]";
 }
 
 }; // namespace bot

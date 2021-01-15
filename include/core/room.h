@@ -72,6 +72,11 @@ public:
      * @returns room's description, string
      * */
     virtual std::string desc() const;
+    /**
+     * Room's description, consists of name, tg ID and token.
+     * @returns room's description, string
+     * */
+    virtual std::string log_desc() const;
 };
 }; // namespace bot
 
@@ -129,6 +134,10 @@ void room::process_mes(user_ptr user, mes_ptr mes) {
 }
 std::string room::desc() const {
     return fmt::format("{}[{}]", name(), token());
+}
+
+std::string room::log_desc() const {
+    return name() + "[tk:" + token() + "][id:" + std::to_string(id()) + "]";
 }
 
 }; // namespace bot

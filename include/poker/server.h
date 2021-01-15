@@ -17,6 +17,7 @@ public:
 poker_server::poker_server(): server() { }
 
 room_ptr poker_server::create_room(user_ptr user) {
+    auto prefix = fmt::format("poker_server::create_room user:{}", user->log_desc());
     lobby()->del_user(user);
 
     auto room     = std::make_shared<class poker::game_poker_room>(p_get_room_id());
@@ -26,8 +27,7 @@ room_ptr poker_server::create_room(user_ptr user) {
     user->current_room() = room;
     rooms().emplace_back(room);
 
-    m_lgr << "server: user" << bot::utils::get_desc_log(user) << " created poker room" << bot::utils::get_desc(room)
-          << "\n";
+    m_lgr.info("{} created room {}", prefix, room->log_desc());
     return room;
 }
 

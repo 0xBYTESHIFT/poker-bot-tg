@@ -12,6 +12,8 @@
 int main(int argc, char* argv[]) {
     auto lgr = initialization_logger();
     lgr.set_level(logger::level::info);
+    auto internal = lgr.get_internal_logger();
+    internal->set_pattern("[%Y-%m-%d %T] [%L] %v");
 
     //parse options
     namespace po = boost::program_options;

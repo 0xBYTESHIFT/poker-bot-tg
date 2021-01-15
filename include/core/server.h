@@ -120,22 +120,29 @@ id_t server::p_get_room_id() {
 }
 
 user_ptr server::get_user(id_t id) const {
+    auto prefix  = fmt::format("server::get_user id:{}", id);
     auto user_it = users().find(id);
     if(user_it != users().end()) {
+        m_lgr.debug("{} was found", prefix);
         return user_it->second;
     }
+    m_lgr.debug("{} wasn't found", prefix);
     return nullptr;
 }
 
 room_ptr server::get_room(const room::token_t& token) const {
+    auto prefix  = fmt::format("server::get_room token:{}", token);
     auto room_it = std::find_if(rooms().begin(), rooms().end(), [&token](auto room) { return room->token() == token; });
     if(room_it != rooms().end()) {
+        m_lgr.debug("{} was found", prefix);
         return *room_it;
     }
+    m_lgr.debug("{} wasn't found", prefix);
     return nullptr;
 }
 
 room_ptr server::create_room(user_ptr user) {
+    auto prefix = fmt::format("server::create_room {}", user->desc());
     lobby()->del_user(user);
 
     auto room     = std::make_shared<class room>(p_get_room_id());
@@ -145,28 +152,35 @@ room_ptr server::create_room(user_ptr user) {
     user->current_room() = room;
     rooms().emplace_back(room);
 
-    m_lgr << "server: user" << utils::get_desc_log(user) << " created room" << utils::get_desc(room) << "\n";
+    m_lgr.info("{} created room {}", prefix, utils::get_desc(room));
     return room;
 }
 
 void server::on_user_connect(user_ptr user) {
+    auto prefix = fmt::format("server::on_user_connect {}", user->desc());
     users().emplace(user->id, user);
     user->token = token_generator::gen();
+    m_lgr.info("{} connected, got token:{}", prefix, user->token());
 }
 
 void server::on_user_disconnect(user_ptr user) {
+    auto prefix = fmt::format("server::on_user_disconnect {}", user->desc());
     users().erase(user->id);
+    m_lgr.info("{} diconnected", prefix);
 }
 
 void server::on_room_empty(room_ptr room) {
+    auto prefix = fmt::format("server::on_room_empty room:{}", room->desc());
     if(!room->users().empty()) {
-        m_lgr << "E server: called on_empty handler on non-empty room" << bot::utils::get_desc(room) << "\n";
+        m_lgr.error("{} called on non-empty room", prefix);
         return;
     }
     if(utils::erase(rooms(), room)) {
-        m_lgr << "server: room" << bot::utils::get_desc(room) << " removed\n";
+        m_lgr.info("{} removed a room", prefix);
     } else {
-        throw std::runtime_error("no such room in the server to delete");
+        auto mes = fmt::format("{} no such room in the server to delete", prefix);
+        m_lgr.error(mes);
+        throw std::runtime_error(mes);
     }
 }
 

@@ -148,7 +148,7 @@ auto initialization_logger(const std::string& prefix) -> logger {
     std::vector<spdlog::sink_ptr> sinks {stdout_sink, file_sink};
     auto logger = std::make_shared<spdlog::logger>( ///async_logger
         "default", sinks.begin(), sinks.end()       //,
-                                                    /*spdlog::thread_pool(),*/
+        /*spdlog::thread_pool(),*/
         /*spdlog::async_overflow_policy::block*/);
 
     spdlog::flush_every(std::chrono::seconds(1)); //todo: hack

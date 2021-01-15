@@ -82,40 +82,53 @@ namespace bot {
 room::room(id_t id): identifyable(id) { }
 
 void room::add_user(user_ptr user) {
+    auto prefix = fmt::format("room::add_user room:{} {}[{}]", desc(), user->desc(), user->id());
+    m_lgr.info("{} room:{}, adding user", prefix, desc());
     this->users().emplace_back(user);
-    m_lgr << "room:" << desc() << ", user" << bot::utils::get_desc_log(user) << " connected\n";
 }
 void room::del_user(user_ptr user) {
+    auto prefix = fmt::format("room::del_user room:{} {}[{}]", desc(), user->desc(), user->id());
     if(utils::erase(users(), user)) {
         user->current_room() = nullptr;
-        m_lgr << "room:" << desc() << ", user" << bot::utils::get_desc_log(user) << " disconnected\n";
+        m_lgr.info("{} room:{}, deleting user", prefix, desc());
     } else {
-        throw std::runtime_error("no such user in the room to delete");
+        auto mes = fmt::format("{} room:{} no such user in the room to delete", prefix, desc());
+        m_lgr.error(mes);
+        throw std::runtime_error(mes);
     }
 }
 bool room::contains_user(const user_ptr user) const {
     return bot::utils::contains(users.get(), user);
 }
 user_ptr room::get_user(const id_t& id) const {
-    auto user_it = utils::find_if(users(), [&id](const user_ptr& u) { return u->id() == id; });
+    auto prefix  = fmt::format("room::get_user room:{} id:{}", desc(), id);
+    auto pred    = [&id](const user_ptr& u) { return u->id() == id; };
+    auto user_it = utils::find_if(users(), pred);
     if(user_it != users().end()) {
+        m_lgr.debug("{} user was found", prefix);
         return *user_it;
     }
+    m_lgr.debug("{} user wasn't found", prefix);
     return nullptr;
 }
 user_ptr room::get_user(const user::token_t& token) const {
-    auto user_it = utils::find_if(users(), [&token](const user_ptr& u) { return u->token() == token; });
+    auto prefix  = fmt::format("room::get_user room:{} token:{}", desc(), token);
+    auto pred    = [&token](const user_ptr& u) { return u->token() == token; };
+    auto user_it = utils::find_if(users(), pred);
     if(user_it != users().end()) {
+        m_lgr.debug("{} user was found", prefix);
         return *user_it;
     }
+    m_lgr.debug("{} user wasn't found", prefix);
     return nullptr;
 }
 
 void room::process_mes(user_ptr user, mes_ptr mes) {
-    m_lgr << "room:" << desc() << ", user" << bot::utils::get_desc_log(user) << " wrote:" << mes->text << "\n";
+    auto prefix = fmt::format("room::process_mes room:{} user:{}", desc(), user->desc());
+    m_lgr.debug("{} wrote: {}", prefix, mes->text);
 }
 std::string room::desc() const {
-    return name() + "[" + token() + "]";
+    return fmt::format("{}[{}]", name(), token());
 }
 
 }; // namespace bot

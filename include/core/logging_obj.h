@@ -7,7 +7,7 @@ namespace bot {
      * */
 class logging_obj {
 protected:
-    logger m_lgr; /*< logger */
+    mutable logger m_lgr; /*< logger */
 public:
     /**
      * Default constructor, initializes logger

@@ -123,7 +123,6 @@ user_ptr server::get_user(id_t id) const {
     auto prefix  = fmt::format("server::get_user id:{}", id);
     auto user_it = users().find(id);
     if(user_it != users().end()) {
-        m_lgr.debug("{} was found", prefix);
         return user_it->second;
     }
     m_lgr.debug("{} wasn't found", prefix);
@@ -134,7 +133,6 @@ room_ptr server::get_room(const room::token_t& token) const {
     auto prefix  = fmt::format("server::get_room token:{}", token);
     auto room_it = std::find_if(rooms().begin(), rooms().end(), [&token](auto room) { return room->token() == token; });
     if(room_it != rooms().end()) {
-        m_lgr.debug("{} was found", prefix);
         return *room_it;
     }
     m_lgr.debug("{} wasn't found", prefix);

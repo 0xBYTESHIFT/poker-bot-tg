@@ -13,8 +13,15 @@ public:
      * Default constructor, initializes logger
      * */
     logging_obj();
+
+    template<class Mes>
+    auto desc(const Mes& mes) -> std::string;
 };
 
 logging_obj::logging_obj(): m_lgr(get_logger()) { }
 
+template<class Mes>
+auto logging_obj::desc(const Mes& mes) -> std::string {
+    return fmt::format("{} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+}
 } // namespace bot

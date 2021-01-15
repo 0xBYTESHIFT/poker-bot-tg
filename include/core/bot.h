@@ -139,6 +139,8 @@ protected:
      * */
     auto p_process_cmd(const mes_ptr& mes) -> std::tuple<user_ptr, std::optional<command>>;
 
+    bool p_check_user(const user_ptr& user, const std::string& prefix);
+
 public:
     /**
      * Room bot's constructor \n
@@ -156,14 +158,14 @@ public:
 
 void room_bot::p_on_start(mes_ptr mes) {
     auto id     = mes->chat->id;
-    auto prefix = fmt::format("room_bot::on_start {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix = fmt::format("room_bot::on_start {}", desc(mes));
 
     m_lgr.info("{} start", prefix);
     api.sendMessage(id, "Hi!");
     auto& s       = *this->s.get();
     auto srv_user = s.get_user(id);
     if(srv_user) {
-        m_lgr.debug("user already exists, skip adding");
+        m_lgr.debug("{} user already exists, skip adding", prefix);
         return;
     } //prevent double joining
     auto user    = std::make_shared<class user>(id);
@@ -181,14 +183,12 @@ void room_bot::p_on_stop(mes_ptr mes) {
     auto id     = mes->chat->id;
     auto& s     = *this->s.get();
     auto user   = s.get_user(id);
-    auto prefix = fmt::format("room_bot::on_stop {} [{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
-
-    m_lgr.info("{} stop ", prefix);
-
-    if(!user) {
-        m_lgr.debug(fmt::format("no user id:{} to stop, skipping", id));
+    auto prefix = fmt::format("room_bot::on_stop {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
         return;
     }
+
+    m_lgr.info("{} stop ", prefix);
     user->current_room()->del_user(user);
     {
         auto& serv_users = s.users();
@@ -199,7 +199,7 @@ void room_bot::p_on_stop(mes_ptr mes) {
 void room_bot::p_on_any(mes_ptr mes) {
     auto id     = mes->chat->id;
     auto& s     = *this->s.get();
-    auto prefix = fmt::format("room_bot::on_any {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix = fmt::format("room_bot::on_any {}", desc(mes));
 
     for(auto& cmd: m_commands) {
         if(StringTools::startsWith(mes->text, "/" + cmd.cmd_word())) {
@@ -208,8 +208,7 @@ void room_bot::p_on_any(mes_ptr mes) {
         } //skip if we got a command
     }
     auto user = s.get_user(id);
-    if(!user) {
-        m_lgr.error("{} is not on bot, skipping on_any()", prefix);
+    if(!p_check_user(user, prefix)) {
         return;
     }
 
@@ -236,8 +235,10 @@ void room_bot::p_on_room_create_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_create {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_create {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto room = s.create_room(user); //places user in that room too
     m_lgr.info("{} created room, id:{} token:{}", prefix, room->id(), room->token());
@@ -254,8 +255,10 @@ void room_bot::p_on_room_close_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_close {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_close {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto room = user->current_room();
     if(!room) {
@@ -281,8 +284,10 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_join {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_join {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     std::string response;
@@ -316,6 +321,10 @@ void room_bot::p_on_room_list_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
+    auto prefix                = fmt::format("room_bot::on_room_list_request {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto& room           = user->current_room();
     std::string response = "token name [muted]\n";
@@ -333,8 +342,10 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_kick {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_kick {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     //NOTE: words[1] is guaranteed to be present, see p_process_cmd
     auto words = StringTools::split(mes->text, ' ');
@@ -359,8 +370,7 @@ void room_bot::p_on_room_kick_request(mes_ptr mes) {
             s.lobby()->add_user(user_kicked);        //place kicked user in lobby
             user_kicked->current_room() = s.lobby(); //save lobby as user's new room
 
-            auto user_mes = fmt::format("You were kicked from room {} by {} {}[{}]", room->desc(), mes->chat->firstName,
-                                        mes->chat->lastName, mes->chat->id);
+            auto user_mes = fmt::format("You were kicked from room {} by {} ", room->desc(), user->desc());
             api.sendMessage(user_kicked->id, user_mes);
             response = fmt::format("{} was kicked from this room", user_kicked->desc());
             m_lgr.debug("{} broadcasting kick message", prefix);
@@ -379,8 +389,10 @@ void room_bot::p_on_room_subscribe_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_subscribe {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_subscribe {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
@@ -400,8 +412,10 @@ void room_bot::p_on_room_unsubscribe_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix = fmt::format("room_bot::on_room_unsubscribe {} {}[{}]", mes->chat->firstName, mes->chat->lastName,
-                              mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_unsubscribe {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
@@ -421,8 +435,10 @@ void room_bot::p_on_room_mute_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_mute {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_mute {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
@@ -463,8 +479,10 @@ void room_bot::p_on_room_unmute_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
-    auto prefix =
-        fmt::format("room_bot::on_room_unmute {} {}[{}]", mes->chat->firstName, mes->chat->lastName, mes->chat->id);
+    auto prefix                = fmt::format("room_bot::on_room_unmute {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
@@ -474,12 +492,13 @@ void room_bot::p_on_room_unmute_request(mes_ptr mes) {
         m_lgr.info("{} attempt to unmute {}, not enough rights", prefix, words[1]);
         response = "You are not allowed to do this";
     } else {
-        auto token = words.at(1);
-        auto user_unmuted_it =
-            std::find_if(room->muted().begin(), room->muted().end(), [&token](auto u) { return u->token() == token; });
+        auto token           = words.at(1);
+        auto pred            = [&token](auto u) { return u->token() == token; };
+        auto user_unmuted_it = utils::find_if(room->muted(), pred);
         if(user_unmuted_it == room->muted().end()) {
             auto mes = fmt::format("No user with token {} in this room to unmute", token);
-            response = "No user with token " + token + " was muted in this room";
+            response = mes;
+            m_lgr.info("{} {}", prefix, mes);
         } else {
             auto user_unmuted = *user_unmuted_it;
             room->muted().erase(user_unmuted);
@@ -503,19 +522,27 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
+    auto prefix                = fmt::format("room_bot::on_room_ban {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
+        m_lgr.info("{} attempt to ban {}, not enough rights", prefix, words[1]);
         response = "You are not allowed to do this";
     } else {
         auto token       = words.at(1);
         auto user_banned = room->get_user(token);
         if(!user_banned) {
-            response = "No user with token " + token + " in this room";
+            auto mes = fmt::format("No user with token {} in this room", token);
+            m_lgr.info("{} {}", prefix, mes);
+            response = mes;
         } else if(user_banned == user) {
+            m_lgr.info("{} attempt to self-ban", prefix);
             response = "Are you sure that you intended to ban yourself? I "
                        "can't allow this, sorry.";
         } else {
@@ -524,8 +551,10 @@ void room_bot::p_on_room_ban_request(mes_ptr mes) {
             s.lobby()->add_user(user_banned);        //place user in lobby
             user_banned->current_room() = s.lobby(); //save lobby as user's new room
 
-            api.sendMessage(user_banned->id, "You were banned in room " + room->desc());
-            response = user_banned->desc() + " was banned from this room";
+            auto mes = fmt::format("banned in room {} by {}", room->desc(), user->desc());
+            api.sendMessage(user_banned->id, fmt::format("You were {}", mes));
+            response = fmt::format("{} was {}", user_banned->desc(), mes);
+            m_lgr.info("{} {}", prefix, response);
             for(auto& u: room->users()) {
                 if(u == user) {
                     continue;
@@ -541,25 +570,34 @@ void room_bot::p_on_room_unban_request(mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
+    auto prefix                = fmt::format("room_bot::on_room_unban {}", desc(mes));
+    if(!p_check_user(user, prefix)) {
+        return;
+    }
 
     auto words = StringTools::split(mes->text, ' ');
     auto& room = user->current_room();
     std::string response;
 
     if(room->owner() != user) {
+        m_lgr.info("{} attempt to unban {}, not enough rights", prefix, words[1]);
         response = "You are not allowed to do this";
     } else {
         auto token            = words.at(1);
-        auto user_unbanned_it = std::find_if(room->banned().begin(), room->banned().end(),
-                                             [&token](auto u) { return u->token() == token; });
+        auto pred             = [&token](auto u) { return u->token() == token; };
+        auto user_unbanned_it = utils::find_if(room->banned(), pred);
         if(user_unbanned_it == room->banned().end()) {
-            response = "No user with token " + token + " was banned in this room";
+            auto mes = fmt::format("No user with token {} in this room to unban", token);
+            response = mes;
+            m_lgr.info("{} {}", prefix, mes);
         } else {
             auto user_unbanned = *user_unbanned_it;
             room->banned().erase(user_unbanned);
 
-            api.sendMessage(user_unbanned->id, "You were unbanned in room " + room->desc());
-            response = user_unbanned->desc() + " was unbanned in this room";
+            auto mes = fmt::format("unbanned in room {} by {}", room->desc(), user->desc());
+            api.sendMessage(user_unbanned->id, fmt::format("You were {} ", mes));
+            response = fmt::format("{} was {}", user_unbanned->desc(), mes);
+            m_lgr.info("{} {}", prefix, response);
             for(auto& u: room->users()) {
                 if(u == user) {
                     continue;
@@ -583,8 +621,10 @@ room_bot::room_bot(const std::string& token): m_bot(token), api(m_bot.getApi()) 
                             [this](auto mes) { p_on_room_join_request(mes); });
     m_commands.emplace_back("list", "list users in the room", no_args,
                             [this](auto mes) { p_on_room_list_request(mes); });
-    m_commands.emplace_back("kick", "kick user", no_args, [this](auto mes) { p_on_room_kick_request(mes); });
-    m_commands.emplace_back("mute", "mute user", no_args, [this](auto mes) { p_on_room_mute_request(mes); });
+    m_commands.emplace_back("kick", "kick user", args_t {"user_token"},
+                            [this](auto mes) { p_on_room_kick_request(mes); });
+    m_commands.emplace_back("mute", "mute user", args_t {"user_token"},
+                            [this](auto mes) { p_on_room_mute_request(mes); });
     m_commands.emplace_back("unmute", "unmute user", args_t {"user_token"},
                             [this](auto mes) { p_on_room_unmute_request(mes); });
     m_commands.emplace_back("ban", "ban user", args_t {"user_token"}, [this](auto mes) { p_on_room_ban_request(mes); });
@@ -611,8 +651,8 @@ auto room_bot::p_process_cmd(const mes_ptr& mes) -> std::tuple<user_ptr, std::op
         return std::make_tuple(user, std::nullopt);
     }
     auto words  = StringTools::split(mes->text, ' ');
-    auto cmd_it = std::find_if(m_commands.begin(), m_commands.end(),
-                               [&](auto cmd) { return "/" + cmd.cmd_word() == words.at(0); });
+    auto pred   = [&](auto cmd) { return "/" + cmd.cmd_word() == words.at(0); };
+    auto cmd_it = utils::find_if(m_commands, pred);
     if(cmd_it == m_commands.end()) {
         m_lgr.error("{} unknown command, words:{}", prefix, words);
         api.sendMessage(id, "Unknown command");
@@ -628,6 +668,14 @@ auto room_bot::p_process_cmd(const mes_ptr& mes) -> std::tuple<user_ptr, std::op
         return std::make_tuple(user, std::nullopt);
     }
     return std::make_tuple(user, std::move(cmd));
+}
+
+bool room_bot::p_check_user(const user_ptr& user, const std::string& prefix) {
+    if(!user) {
+        m_lgr.error("{} no user in bot, skipping", prefix);
+        return false;
+    }
+    return true;
 }
 
 void room_bot::start() {

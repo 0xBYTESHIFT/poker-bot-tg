@@ -87,12 +87,12 @@ namespace bot {
 room::room(id_t id): identifyable(id) { }
 
 void room::add_user(user_ptr user) {
-    auto prefix = fmt::format("room::add_user room:{} {}[{}]", desc(), user->desc(), user->id());
+    auto prefix = fmt::format("room::add_user room:{} {}", desc(), user->log_desc());
     m_lgr.info("{} room:{}, adding user", prefix, desc());
     this->users().emplace_back(user);
 }
 void room::del_user(user_ptr user) {
-    auto prefix = fmt::format("room::del_user room:{} {}[{}]", desc(), user->desc(), user->id());
+    auto prefix = fmt::format("room::del_user room:{} {}", desc(), user->log_desc());
     if(utils::erase(users(), user)) {
         user->current_room() = nullptr;
         m_lgr.info("{} room:{}, deleting user", prefix, desc());

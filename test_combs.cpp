@@ -1,33 +1,32 @@
+#include <execution>
 #include <iostream>
+#include <map>
+#include <mutex>
 #include <poker/card.h>
 #include <poker/deck.h>
 #include <poker/kinds.h>
+#include <set>
 #include <sstream>
+#include <unordered_set>
 
 using cards_t = std::vector<poker::card>;
 
-/*
-Credit: geoffp at codewars
-*/
-struct PokerHand: public std::vector<poker::card> {
-    /* ------------------------------------------------------------------------------------------------- */
-    // Produce a string whose lexicographic rank order reflects the ranking of the hand in poker.
-    // Examples:  "41000-63"     ;four of a kind (6s), the odd card is a 3
-    //            "22100-928"    ;two pair (9s and 2s), the odd card is an 8
-    //            "32000-da"     ;full house with three kings and two 10s
-    //            "312ST-ba987"  ;jack-high straight
-    // Hex digits (abcde) are used instead of TJQKA to get the lexicographic order right.
-    std::string ranking_string() const;
-};
-
-std::string PokerHand::ranking_string() const {
-    unsigned i, c, r;
+/* ------------------------------------------------------------------------------------------------- */
+// Produce a string whose lexicographic rank order reflects the ranking of the hand in poker.
+// Examples:  "41000-63"     ;four of a kind (6s), the odd card is a 3
+//            "22100-928"    ;two pair (9s and 2s), the odd card is an 8
+//            "32000-da"     ;full house with three kings and two 10s
+//            "312ST-ba987"  ;jack-high straight
+// Hex digits (abcde) are used instead of TJQKA to get the lexicographic order right.
+// Credit: geoffp at codewars
+std::string ranking_string(const std::vector<poker::card>& cards) {
+    unsigned c, r;
 
     // Count the number of occurrences of each rank:
     std::vector<unsigned> rc(15, 0);
     for(r = 2; r <= 14; r++) {
-        for(i = 0; i < this->size(); i++) {
-            if((*this)[i].value == r) {
+        for(auto& c: cards) {
+            if(c.value == r) {
                 ++rc[r];
             }
         }
@@ -43,12 +42,8 @@ std::string PokerHand::ranking_string() const {
     bool straight = std::search_n(rc.begin(), rc.end(), 5, 1) != rc.end();
 
     // Check for a flush:
-    bool flush = true;
-    for(auto p = begin() + 1; flush && p != end(); ++p) {
-        if(p->kind != begin()->kind) {
-            flush = false;
-        }
-    }
+    auto flush_pred = [&cards](auto c) { return c.kind == cards.front().kind; };
+    bool flush             = std::all_of(cards.begin(), cards.end(), flush_pred);
 
     // Form the second (tie-breaking) part of the ranking string:
     std::string tiebreak;
@@ -60,7 +55,7 @@ std::string PokerHand::ranking_string() const {
             for(r = 14; r >= 1; r--) {
                 if(rc[r] == c) {
                     tiebreak_ << std::hex << r;
-                    for(auto& card: *this) {
+                    for(auto& card: cards) {
                         if(card.value == r || (r == 1 && card.value == 14)) {
                             kinds_ << card.kind.name.front();
                         }
@@ -103,9 +98,9 @@ struct combination {
     int value;
     std::string name;
     std::vector<poker::card> cards = {};
+    std::string comb_string        = "";
 
-    combination(int value, const std::string& name):
-        value(value), name(name) { }
+    combination(int value, const std::string& name): value(value), name(name) { }
     combination(): combination(-1, "") { }
 
     std::string dump() const {
@@ -117,6 +112,11 @@ struct combination {
         }
         return result;
     }
+
+    bool operator==(const combination& rhs) const {
+        return value == rhs.value && name == rhs.name && std::equal(cards.begin(), cards.end(), rhs.cards.begin());
+    }
+    bool operator<(const combination& rhs) const { return comb_string < rhs.comb_string; }
 };
 
 namespace combs {
@@ -132,21 +132,44 @@ static combination straight_flush {8, "straight flush"};
 static combination royal_flush {9, "royal flush"};
 }; // namespace combs
 
-template<class T>
-std::vector<std::vector<T>> perms(std::vector<T> one, std::vector<T> two) {
-    std::vector<std::vector<T>> result;
-    for(auto& two_el: two) {
-        for(auto& one_el: one) {
-            std::swap(two_el, one_el);
-            result.emplace_back(one);
-            std::swap(two_el, one_el);
+template<class Str>
+combination get_comb(Str&& comb_str, const cards_t& comb_cards) {
+    combination comb;
+    if(comb_str == "313FL") {
+        comb = combs::flush;
+    } else if(comb_str == "312ST") {
+        comb = combs::straight;
+    } else if(comb_str == "5STFL") {
+        comb         = combs::straight_flush;
+        auto beg     = comb_cards.begin();
+        auto end     = comb_cards.end();
+        bool has_ace = std::find_if(beg, end, [](auto c) { return c.value == 14; }) != end;
+        bool has_ten = std::find_if(beg, end, [](auto c) { return c.value == 10; }) != end;
+        if(has_ace && has_ten) {
+            comb = combs::royal_flush;
         }
+    } else if(comb_str.at(0) == '4') {
+        comb = combs::four_of_a_kind;
+    } else if(comb_str.at(0) == '3') {
+        if(comb_str.at(1) == '2') {
+            comb = combs::full_house;
+        } else {
+            comb = combs::three_of_a_kind;
+        }
+    } else if(comb_str.at(0) == '2') {
+        if(comb_str.at(1) == '2') {
+            comb = combs::pair_two;
+        } else {
+            comb = combs::pair_one;
+        }
+    } else {
+        comb = combs::high;
     }
-    return result;
+    return comb;
 }
 
-std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
-    std::vector<combination> results;
+std::set<combination> get_combs(const cards_t& cards, const cards_t& hand) {
+    std::set<combination> results;
     using hand_t = std::vector<poker::card>;
     hand_t combined;
     combined.reserve(cards.size() + hand.size());
@@ -159,46 +182,34 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
 
     std::sort(combined.begin(), combined.end());
 
-    auto prnt = [](auto cards) {
-        for(auto& card: cards) {
-            std::cout << "v:" << card.value;
-            std::cout << " k:" << card.kind.name << "\n";
-        }
-        std::cout << "\n";
-    };
-
-    std::vector<hand_t> hands;
-    hands.reserve(2520);
+    std::set<hand_t> hands;
 
     do {
         hand_t tmp;
         tmp.reserve(5);
-        std::copy(combined.begin(), combined.begin() + 5,
-                  std::back_inserter(tmp));
-        //if(std::find(hands.begin(), hands.end(), tmp) == hands.end()) {
-        hands.emplace_back(std::move(tmp));
-        //}
+        std::copy(combined.begin(), combined.begin() + 5, std::back_inserter(tmp));
+        std::sort(tmp.begin(), tmp.end());
+        hands.emplace(std::move(tmp));
     } while(std::next_permutation(combined.begin(), combined.end()));
 
     std::vector<std::string> comb_strings;
+    comb_strings.reserve(hands.size());
     for(auto& hand: hands) {
-        PokerHand p_hand;
-        p_hand.swap(hand);
-        auto tmp     = p_hand.ranking_string();
-        auto find_it = std::find(comb_strings.begin(), comb_strings.end(), tmp);
-        if(find_it == comb_strings.end()) {
-            comb_strings.emplace_back(std::move(tmp));
-        } else {
-        }
-        hand.swap(p_hand);
+        auto tmp = ranking_string(hand);
+        comb_strings.emplace_back(std::move(tmp));
     }
-    std::sort(comb_strings.begin(), comb_strings.end());
-    results.reserve(comb_strings.size());
+    //results.reserve(comb_strings.size());
+    std::mutex mt;
 
-    for(const auto& str: comb_strings) {
-        auto first_pos = str.find('-');
-        auto comb_str  = std::string_view(str).substr(0, first_pos);
-        auto cards_str = std::string_view(str).substr(first_pos + 1);
+    const size_t size = comb_strings.size();
+    //std::for_each(std::execution::seq, comb_strings.begin(), comb_strings.end(), [&](const auto& str) {
+    for(size_t i = 0; i < size; i++) {
+        const auto& str = comb_strings.at(i);
+        //std::cout << str << "\n";
+        auto first_pos                 = str.find('-');
+        auto last_pos                  = str.find_last_of('-');
+        std::string_view comb_str      = std::string_view(str).substr(0, first_pos);
+        std::string_view comb_str_full = std::string_view(str).substr(0, last_pos);
 
         std::vector<poker::card> comb_cards;
         {
@@ -207,8 +218,7 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
             int str_i        = 0;
             int kind_i       = str.find_last_of('-') + 1;
             int val_i        = first_pos + 1;
-            if(comb_str == "313FL" || comb_str == "312ST" ||
-               comb_str == "5STFL") {
+            if(comb_str == "313FL" || comb_str == "312ST" || comb_str == "5STFL") {
                 str_ = "11111" + str.substr(first_pos);
             }
             while(card_i < 5) {
@@ -229,73 +239,22 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
                 str_i++;
                 val_i++;
             }
-            std::sort(comb_cards.begin(), comb_cards.end());
             //prnt(comb_cards);
 
-            combination comb;
-            if(comb_str == "313FL") {
-                comb = combs::flush;
-            } else if(comb_str == "312ST") {
-                comb = combs::straight;
-            } else if(comb_str == "5STFL") {
-                comb = combs::straight_flush;
-                if(comb_cards.at(0).value == 10 &&
-                   comb_cards.at(1).value == 11 &&
-                   comb_cards.at(2).value == 12 &&
-                   comb_cards.at(3).value == 13 &&
-                   comb_cards.at(4).value == 14) {
-                    comb = combs::royal_flush;
-                }
-            } else if(comb_str.at(0) == '4') {
-                comb = combs::four_of_a_kind;
-            } else if(comb_str.at(0) == '3') {
-                if(comb_str.at(1) == '2') {
-                    comb = combs::full_house;
-                } else {
-                    comb = combs::three_of_a_kind;
-                }
-            } else if(comb_str.at(0) == '2') {
-                if(comb_str.at(1) == '2') {
-                    comb = combs::pair_two;
-                } else {
-                    comb = combs::pair_one;
-                }
-            } else {
-                comb = combs::high;
+            auto comb        = get_comb(comb_str, comb_cards);
+            comb.comb_string = comb_str_full;
+            comb.cards       = std::move(comb_cards);
+            {
+                std::lock_guard<std::mutex> lock(mt);
+                results.emplace(std::move(comb));
             }
-            comb.cards = std::move(comb_cards);
-            results.emplace_back(std::move(comb));
         }
     }
+    //);
     return results;
 }
 
-void test_straight() {
-    cards_t table;
-    table.emplace_back(3, poker::clovers);
-    table.emplace_back(4, poker::pikes);
-    table.emplace_back(13, poker::hearts);
-    table.emplace_back(7, poker::hearts);
-    table.emplace_back(14, poker::pikes);
-
-    player p;
-    p.cards.emplace_back(5, poker::hearts);
-    p.cards.emplace_back(2, poker::hearts);
-    auto pl_combs = get_combs(table, p.cards);
-
-    std::cout << "player 0 top 5 combs:\n";
-    auto len = std::min(5LL, (long long)pl_combs.size());
-    auto it  = pl_combs.rbegin();
-    for(; it != pl_combs.rbegin() + len; it++) {
-        std::cout << (*it).dump() << "\n";
-    }
-    std::cout << "\n";
-}
-
-#include <map>
 int main() {
-    test_straight();
-
     std::size_t repeats = 1000;
     std::map<std::string, std::size_t> cases;
 
@@ -305,8 +264,6 @@ int main() {
             std::cout << i * 1.0 / repeats * 100 << "%\n";
         }
         d.shuffle();
-        //std::cout << "deck:\n";
-        //print(d.get_cards());
 
         const int players_size = 5;
         std::vector<player> plrs(players_size);
@@ -322,22 +279,22 @@ int main() {
         //std::cout << "table:\n";
         //print(table);
 
-        std::vector<std::vector<combination>> combs;
+        std::vector<std::set<combination>> combs;
         int pl_num = 0;
         for(auto& pl: plrs) {
             //std::cout << "player " << pl_num << "hand:\n";
-            //std::cout << pl.cards.at(0)->value
-            //          << pl.cards.at(0)->kind.name.front() << " ";
-            //std::cout << pl.cards.at(1)->value
-            //          << pl.cards.at(1)->kind.name.front() << "\n";
+            //std::cout << pl.cards.at(0).value << pl.cards.at(0).kind.name.front() << " ";
+            //std::cout << pl.cards.at(1).value << pl.cards.at(1).kind.name.front() << "\n";
             auto pl_combs = get_combs(table, pl.cards);
             //std::cout << "player " << pl_num << " top 5 combs:\n";
-            //auto len = std::min(5LL, (long long)pl_combs.size());
-            auto len = pl_combs.size();
-            auto it  = pl_combs.rbegin();
-            for(; it != pl_combs.rbegin() + len; it++) {
-                //std::cout << (*it).dump() << "\n";
-                cases[(*it).name]++;
+            auto len = std::min(5LL, (long long)pl_combs.size());
+            //auto len = pl_combs.size();
+            //auto it = pl_combs.begin();
+            //for(; it != pl_combs.begin() + len; it++) {
+            for(auto& comb: pl_combs) {
+                //std::cout << comb.dump() << "\n";
+                cases[comb.name]++;
+                --len;
             }
             //std::cout << "\n";
             combs.emplace_back(std::move(pl_combs));

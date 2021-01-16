@@ -6,6 +6,7 @@ enable_testing()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1 -g -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -s -ffast-math -march=native -mtune=native")
 
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -32,11 +33,12 @@ conan_basic_setup()
 
 add_executable(tg-poker main.cpp)
 target_include_directories(tg-poker PRIVATE include)
-target_link_libraries(tg-poker ${CONAN_LIBS})
+target_link_libraries(tg-poker ${CONAN_LIBS} tbb)
 target_compile_options(tg-poker PRIVATE -Wall -Wextra)
 
 add_executable(test_combs test_combs.cpp)
 target_include_directories(test_combs PRIVATE include)
+target_link_libraries(test_combs ${CONAN_LIBS} tbb)
 target_compile_options(test_combs PRIVATE -Wall -Wextra)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

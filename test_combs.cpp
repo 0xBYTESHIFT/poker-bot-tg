@@ -4,7 +4,7 @@
 #include <poker/kinds.h>
 #include <sstream>
 
-using cards_t = std::vector<std::unique_ptr<poker::card>>;
+using cards_t = std::vector<poker::card>;
 
 /*
 Credit: geoffp at codewars
@@ -89,8 +89,8 @@ std::string PokerHand::ranking_string() const {
 
 void print(const cards_t& cards) {
     for(auto& card: cards) {
-        std::cout << "v:" << card->value;
-        std::cout << " k:" << card->kind.name << "\n";
+        std::cout << "v:" << card.value;
+        std::cout << " k:" << card.kind.name << "\n";
     }
     std::cout << "\n";
 }
@@ -149,11 +149,12 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
     std::vector<combination> results;
     using hand_t = std::vector<poker::card>;
     hand_t combined;
+    combined.reserve(cards.size() + hand.size());
     for(auto& c: cards) {
-        combined.emplace_back(*c.get());
+        combined.emplace_back(c);
     }
     for(auto& c: hand) {
-        combined.emplace_back(*c.get());
+        combined.emplace_back(c);
     }
 
     std::sort(combined.begin(), combined.end());
@@ -174,9 +175,9 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
         tmp.reserve(5);
         std::copy(combined.begin(), combined.begin() + 5,
                   std::back_inserter(tmp));
-        if(std::find(hands.begin(), hands.end(), tmp) == hands.end()) {
-            hands.emplace_back(std::move(tmp));
-        }
+        //if(std::find(hands.begin(), hands.end(), tmp) == hands.end()) {
+        hands.emplace_back(std::move(tmp));
+        //}
     } while(std::next_permutation(combined.begin(), combined.end()));
 
     std::vector<std::string> comb_strings;
@@ -192,6 +193,7 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
         hand.swap(p_hand);
     }
     std::sort(comb_strings.begin(), comb_strings.end());
+    results.reserve(comb_strings.size());
 
     for(const auto& str: comb_strings) {
         auto first_pos = str.find('-');
@@ -270,15 +272,15 @@ std::vector<combination> get_combs(const cards_t& cards, const cards_t& hand) {
 
 void test_straight() {
     cards_t table;
-    table.emplace_back(new poker::card(3, poker::clovers));
-    table.emplace_back(new poker::card(4, poker::pikes));
-    table.emplace_back(new poker::card(13, poker::hearts));
-    table.emplace_back(new poker::card(7, poker::hearts));
-    table.emplace_back(new poker::card(14, poker::pikes));
+    table.emplace_back(3, poker::clovers);
+    table.emplace_back(4, poker::pikes);
+    table.emplace_back(13, poker::hearts);
+    table.emplace_back(7, poker::hearts);
+    table.emplace_back(14, poker::pikes);
 
     player p;
-    p.cards.emplace_back(new poker::card(5, poker::hearts));
-    p.cards.emplace_back(new poker::card(2, poker::hearts));
+    p.cards.emplace_back(5, poker::hearts);
+    p.cards.emplace_back(2, poker::hearts);
     auto pl_combs = get_combs(table, p.cards);
 
     std::cout << "player 0 top 5 combs:\n";
@@ -294,11 +296,14 @@ void test_straight() {
 int main() {
     test_straight();
 
-    std::size_t repeats = 10000;
+    std::size_t repeats = 1000;
     std::map<std::string, std::size_t> cases;
 
     for(size_t i = 0; i < repeats; i++) {
         poker::deck d;
+        if(i % 10 == 0) {
+            std::cout << i * 1.0 / repeats * 100 << "%\n";
+        }
         d.shuffle();
         //std::cout << "deck:\n";
         //print(d.get_cards());
@@ -340,8 +345,8 @@ int main() {
         }
     }
 
-    for(auto [name, count]:cases){
-        std::cout << name << " " << count*1.0/repeats << "\n";
+    for(auto [name, count]: cases) {
+        std::cout << name << " " << count * 1.0 / repeats << "\n";
     }
 
     return 0;

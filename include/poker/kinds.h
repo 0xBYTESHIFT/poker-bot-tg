@@ -19,8 +19,7 @@ struct kind {
     bool operator!=(const kind& rhs) const;
 };
 
-kind::kind(size_t id, const std::string& name, const cards_color& color):
-    id(id), name(name), color(color) { }
+kind::kind(size_t id, const std::string& name, const cards_color& color): id(id), name(name), color(color) { }
 bool kind::operator==(const kind& rhs) const {
     return id == rhs.id && name == rhs.name && color == rhs.color;
 }

@@ -43,7 +43,7 @@ std::string ranking_string(const std::vector<poker::card>& cards) {
 
     // Check for a flush:
     auto flush_pred = [&cards](auto c) { return c.kind == cards.front().kind; };
-    bool flush             = std::all_of(cards.begin(), cards.end(), flush_pred);
+    bool flush      = std::all_of(cards.begin(), cards.end(), flush_pred);
 
     // Form the second (tie-breaking) part of the ranking string:
     std::string tiebreak;

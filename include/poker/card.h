@@ -3,6 +3,7 @@
 #include "poker/kinds.h"
 
 #include <utility>
+#include <string>
 
 namespace poker {
 
@@ -16,8 +17,8 @@ public:
     card(card&& k)      = default;
     card(unsigned value, const struct kind& k);
     card& operator=(const card& c) = default;
-    bool operator==(const card& c)const;
-    bool operator<(const card& c)const;
+    bool operator==(const card& c) const;
+    bool operator<(const card& c) const;
 };
 
 /*
@@ -30,7 +31,9 @@ bool card::operator==(const card& c) const {
     return this->value == c.value && this->kind == c.kind;
 }
 bool card::operator<(const card& c) const {
-    return this->value < c.value;
+    std::string str = std::to_string(this->value) + this->kind.name;
+    std::string str_c = std::to_string(c.value) + c.kind.name;
+    return str < str_c;
 }
 
 }; // namespace poker

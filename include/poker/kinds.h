@@ -16,12 +16,16 @@ struct kind {
     kind(size_t id, const std::string& name, const cards_color& color);
     kind& operator=(const kind& rhs) = default;
     bool operator==(const kind& rhs) const;
+    bool operator!=(const kind& rhs) const;
 };
 
 kind::kind(size_t id, const std::string& name, const cards_color& color):
     id(id), name(name), color(color) { }
 bool kind::operator==(const kind& rhs) const {
     return id == rhs.id && name == rhs.name && color == rhs.color;
+}
+bool kind::operator!=(const kind& rhs) const {
+    return !(*this == rhs);
 }
 
 static inline const kind hearts(0, "hearts", cards_color::red);

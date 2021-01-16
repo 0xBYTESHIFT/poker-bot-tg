@@ -35,6 +35,10 @@ target_include_directories(tg-poker PRIVATE include)
 target_link_libraries(tg-poker ${CONAN_LIBS})
 target_compile_options(tg-poker PRIVATE -Wall -Wextra)
 
+add_executable(test_combs test_combs.cpp)
+target_include_directories(test_combs PRIVATE include)
+target_compile_options(test_combs PRIVATE -Wall -Wextra)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)

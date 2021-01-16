@@ -6,17 +6,27 @@ namespace poker {
 enum class cards_color { red, black };
 
 struct kind {
-    const size_t id;
-    const std::string name;
-    const cards_color color;
+    size_t id;
+    std::string name;
+    cards_color color;
 
     virtual ~kind() {};
 
-    kind(const kind& rhs) = delete;
+    kind(const kind& rhs) = default;
     kind(size_t id, const std::string& name, const cards_color& color);
+    kind& operator=(const kind& rhs) = default;
+    bool operator==(const kind& rhs) const;
+    bool operator!=(const kind& rhs) const;
 };
 
-kind::kind(size_t id, const std::string& name, const cards_color& color): id(id), name(name), color(color) { }
+kind::kind(size_t id, const std::string& name, const cards_color& color):
+    id(id), name(name), color(color) { }
+bool kind::operator==(const kind& rhs) const {
+    return id == rhs.id && name == rhs.name && color == rhs.color;
+}
+bool kind::operator!=(const kind& rhs) const {
+    return !(*this == rhs);
+}
 
 static inline const kind hearts(0, "hearts", cards_color::red);
 static inline const kind tiles(1, "tiles", cards_color::red);

@@ -11,11 +11,12 @@ namespace poker {
 
 class game_poker: public games::game {
 public:
-    using player_ptr = std::shared_ptr<player_poker>; /**< Define for poker player ptr */
-    using card_ptr   = deck::card_ptr;                /**< Define for card ptr */
-    bot::property<class bank> bank;                   /**< Bank property to hold coins */
-    bot::property<class deck> cards;                  /**< Cards property to hold a deck */
-    bot::property<std::vector<card_ptr>> table;       /**< Cards on a table container property */
+    using player_ptr =
+        std::shared_ptr<player_poker>; /**< Define for poker player ptr */
+    bot::property<class bank> bank;    /**< Bank property to hold coins */
+    bot::property<class deck> cards;   /**< Cards property to hold a deck */
+    bot::property<std::vector<card>>
+        table; /**< Cards on a table container property */
 
     /** Constructor.
      * @param users users of a room to add to the game as players.
@@ -68,7 +69,7 @@ private:
     void p_fill_hand(game::player_ptr pl);
     void p_handle_bet(game::player_ptr pl, size_t);
     auto p_render_game_state() const -> std::string;
-    auto p_render_card(const card_ptr& c) const -> std::string;
+    auto p_render_card(const card& c) const -> std::string;
     auto p_render_coins(const bank::coins_t& c) const -> std::string;
     void p_send_state(const std::string& game_state, game::player_ptr pl);
     void p_fill_table();
@@ -297,17 +298,17 @@ auto game_poker::p_render_game_state() const -> std::string {
     }
     return mes;
 }
-auto game_poker::p_render_card(const card_ptr& c) const -> std::string {
+auto game_poker::p_render_card(const card& c) const -> std::string {
     const static std::map<std::string, std::string> kind_to_emoji {
         {"pikes", "\xE2\x99\xA0"}, {"hearts", "\xE2\x99\xA5"}, {"tiles", "\xE2\x99\xA6"}, {"clovers", "\xE2\x99\xA3"}};
     const static std::map<int, std::string> value_to_letter {{10, "J"}, {11, "D"}, {12, "K"}, {13, "A"}};
     std::string mes;
-    if(c->value < 10) {
-        mes += std::to_string(c->value);
+    if(c.value < 10) {
+        mes += std::to_string(c.value);
     } else {
-        mes += value_to_letter.at(c->value);
+        mes += value_to_letter.at(c.value);
     }
-    mes += " " + kind_to_emoji.at(c->kind.name);
+    mes += " " + kind_to_emoji.at(c.kind.name);
     return mes;
 }
 auto game_poker::p_render_coins(const bank::coins_t& c) const -> std::string {

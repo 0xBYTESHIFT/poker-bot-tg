@@ -41,6 +41,7 @@ target_include_directories(test_combs PRIVATE include)
 target_link_libraries(test_combs ${CONAN_LIBS} tbb)
 target_compile_options(test_combs PRIVATE -Wall -Wextra)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic")
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)

@@ -105,7 +105,7 @@ auto game_poker::add_player(const bot::user_ptr user) -> bool {
         temp.emplace_back(new poker::coin(1));
     }
     pl->bank().add_coins(temp);
-    m_lgr.info("{} joined poker game");
+    m_lgr.info("{} joined poker game", user->log_desc());
     return true;
 }
 

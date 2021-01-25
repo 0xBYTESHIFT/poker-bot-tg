@@ -246,8 +246,8 @@ void room_bot::p_on_room_create_request(mes_ptr mes) {
     std::string response = "Welcome to new room,\n"
                            "Send this token to your friends so they could join you:";
     api.sendMessage(id, response);
-    response = room->token();
-    api.sendMessage(id, response);
+    response = fmt::format("`{}`", room->token());
+    auto ptr = api.sendMessage(id, response, false, 0, std::make_shared<TgBot::GenericReply>(), "Markdown");
 }
 
 void room_bot::p_on_room_close_request(mes_ptr mes) {
@@ -306,15 +306,15 @@ void room_bot::p_on_room_join_request(mes_ptr mes) {
         room->add_user(user);                 //place in joined room
         user->current_room() = room;          //save joined room in user too
 
-        std::string broadcast_mes = "User " + user->desc() + " joined";
+        std::string broadcast_mes = fmt::format("User {} joined", user->desc());
         for(auto& u: room->users()) {
             if(u == user) {
                 continue;
             }
-            api.sendMessage(id, broadcast_mes);
+            api.sendMessage(u->id(), broadcast_mes);
         }
     }
-    api.sendMessage(id, response);
+    api.sendMessage(user->id(), response);
 }
 void room_bot::p_on_room_list_request(mes_ptr mes) {
     [[maybe_unused]] auto id   = mes->chat->id;

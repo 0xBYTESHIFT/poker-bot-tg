@@ -7,9 +7,35 @@
 #include "poker/game.h"
 
 #include <boost/program_options.hpp>
+#include <boost/stacktrace.hpp>
+#include <csignal>
 #include <iostream>
 
+void my_signal_handler(int signum) {
+    ::signal(signum, SIG_DFL);
+    std::cerr << "signal called:" << std::endl << boost::stacktrace::stacktrace() << std::endl;
+    std::cerr << "errno:" << ::strerror(errno) << std::endl;
+    ::raise(SIGABRT);
+}
+
+void setup_handlers() {
+    ::signal(SIGSEGV, &my_signal_handler);
+    ::signal(SIGABRT, &my_signal_handler);
+}
+
+static auto original_terminate_handler {std::get_terminate()};
+
+void terminate_handler() {
+    std::cerr << "terminate called:" << std::endl << boost::stacktrace::stacktrace() << std::endl;
+    std::cerr << "errno:" << ::strerror(errno) << std::endl;
+    original_terminate_handler();
+    std::abort();
+}
+
 int main(int argc, char* argv[]) {
+    setup_handlers();
+    std::set_terminate(terminate_handler);
+
     auto lgr = initialization_logger();
     lgr.set_level(logger::level::info);
     auto internal = lgr.get_internal_logger();
@@ -61,15 +87,7 @@ int main(int argc, char* argv[]) {
     }
 
     poker::poker_bot b(token);
+    b.start();
 
-    try {
-        b.start();
-    } catch(TgBot::TgException& e) {
-        printf("error tg api: %s\n", e.what());
-    } catch(std::exception& e) {
-        printf("error stl: %s\n", e.what());
-    } catch(...) {
-        printf("we have some bad error here\n");
-    }
     return 0;
 }

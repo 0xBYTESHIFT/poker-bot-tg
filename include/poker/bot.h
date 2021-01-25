@@ -53,6 +53,9 @@ void poker_bot::p_on_room_poker_start(bot::mes_ptr mes) {
     [[maybe_unused]] auto& s   = *(this->s.get());
     [[maybe_unused]] auto user = std::get<0>(p_process_cmd(mes));
     [[maybe_unused]] auto cmd  = std::get<1>(p_process_cmd(mes));
+    if(!user){
+        return;
+    }
     using namespace bot::utils;
 
     auto room = dyn_cast<poker::game_poker_room>(user->current_room());
